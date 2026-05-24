@@ -5,6 +5,7 @@ import { auth } from "./lib/auth";
 import { AuthRoutes } from "./modules/auth/auth.routes";
 import errorHandler from "./middlewares/globalErrorHandler";
 import { CategoryRoutes } from "./modules/category/category.routes";
+import { MedicineRoutes } from "./modules/medicine/medicine.routes";
 const app: Application = express();
 
 app.use(
@@ -21,6 +22,9 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 // Category routes
 app.use("/api/categories", CategoryRoutes);
+
+// Medicine routes
+app.use("/api/medicines", MedicineRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello, World!");

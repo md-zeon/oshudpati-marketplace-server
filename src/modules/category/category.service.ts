@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { generateSlug } from "../../lib/utils";
 
 const getAllCategories = async () => {
   const categories = await prisma.category.findMany({
@@ -25,12 +26,7 @@ interface CategoryData {
 }
 
 const createCategory = async (data: CategoryData) => {
-  const slug = data.name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "") // 1. Strip symbols (leaves spaces behind)
-    .trim() // 2. Clear out any trailing/leading whitespace
-    .replace(/\s+/g, "-") // 3. Convert all spaces (single or multiple) to a hyphen
-    .replace(/-+/g, "-"); // 4. Collapse consecutive hyphens ("--" becomes "-")
+  const slug = generateSlug(data.name);
 
   const newCategory = {
     name: data.name,

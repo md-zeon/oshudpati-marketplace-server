@@ -10,6 +10,7 @@ const getAllCategories = async (
     const categories = await CategoryService.getAllCategories();
     res.status(200).json({
       success: true,
+      message: "Categories retrieved successfully",
       data: categories,
     });
   } catch (error) {
@@ -28,6 +29,7 @@ const getCategoryById = async (
     );
     res.status(200).json({
       success: true,
+      message: "Category retrieved successfully",
       data: category,
     });
   } catch (error) {
@@ -45,6 +47,7 @@ const createCategory = async (
 
     res.status(201).json({
       success: true,
+      message: "Category created successfully",
       data: category,
     });
   } catch (error) {
@@ -66,6 +69,7 @@ const updateCategory = async (
     );
     res.status(200).json({
       success: true,
+      message: "Category updated successfully",
       data: category,
     });
   } catch (error) {

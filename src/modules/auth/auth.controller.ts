@@ -17,7 +17,11 @@ const getCurrentUser = async (
 
     const currentUser = await AuthService.getCurrentUser(user.id);
 
-    res.json(currentUser);
+    res.json({
+      success: true,
+      message: "User retrieved successfully",
+      data: currentUser,
+    });
   } catch (error) {
     next(error);
   }
