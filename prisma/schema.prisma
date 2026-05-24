@@ -12,9 +12,9 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==========================================
-// BETTER AUTH ENUMS & CUSTOM FIELD ENUMS
-// ==========================================
+// ================================================================
+// AUTHENTICATION MODELS (USERS, SESSIONS, ACCOUNTS, VERIFICATIONS)
+// ================================================================
 
 enum UserRole {
   ADMIN
@@ -42,6 +42,13 @@ model User {
 
   sessions Session[]
   accounts Account[]
+
+  medicines    Medicine[] // For sellers: medicines they are selling
+  addresses    Address[] // For customers: their saved addresses
+  cartItems    CartItem[] // For customers: items in their cart
+  orders       Order[] // For customers: orders they have placed
+  vendorOrders VendorOrder[] // For sellers: orders they need to fulfill
+  reviews      Review[] // For customers: reviews they have written
 
   @@unique([email])
   @@map("user")
@@ -93,4 +100,228 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ==========================================
+// SYMPTOM-BASED CATEGORIES
+// ==========================================
+
+model Category {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String // e.g., "Gastric & Ulcer Relief"
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  medicines Medicine[]
+
+  @@map("category")
+}
+
+// ==================================
+// MEDICINES MODEL
+// ==================================
+
+enum DosageForm {
+  TABLET
+  CAPSULE
+  SYRUP
+  OINTMENT
+  INJECTION
+  DROPS
+}
+
+model Medicine {
+  id                 String  @id @default(uuid())
+  slug               String  @unique
+  name               String // e.g., "Napa Extend"
+  genericName        String // e.g., "Paracetamol"
+  shortDescription   String?
+  description        String?
+  indications        String? // Symptoms this medicine targets (e.g., "Fever, Headache")
+  dosageInstructions String?
+  sideEffects        String?
+
+  manufacturerName String
+  brandName        String?
+  dosageForm       DosageForm
+  strength         String? // e.g., "20mg"
+  unitPresentation String // e.g., "10 Tablets"
+  sku              String?    @unique
+
+  price         Decimal  @db.Decimal(10, 2)
+  discountPrice Decimal? @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+
+  averageRating   Float   @default(0)
+  reviewCount     Int     @default(0)
+  totalSalesCount Int     @default(0)
+  isFeatured      Boolean @default(false)
+  isActive        Boolean @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  sellerId   String
+  seller     User     @relation(fields: [sellerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images     MedicineImage[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  cartItems  CartItem[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([slug])
+  @@map("medicine")
+}
+
+model MedicineImage {
+  id         String   @id @default(uuid())
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  imageUrl   String
+  altText    String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("medicine_image")
+}
+
+// ==========================================
+// ADDRESSES
+// ==========================================
+
+model Address {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName      String
+  phoneNumber   String
+  division      String
+  district      String
+  area          String
+  streetAddress String
+  postalCode    String?
+  addressLabel  String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("address")
+}
+
+// ===============================================
+// CART MODEL: SUPPORTING MULTIPLE VENDORS IN CART
+// ===============================================
+
+model CartItem {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, medicineId])
+  @@map("cart_item")
+}
+
+// ===================================================
+// ORDERS MODEL: SUPPORTING MULTIPLE VENDORS PER ORDER
+// ===================================================
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum OrderStatus {
+  PLACED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique
+  customerId      String
+  customer        User          @relation(fields: [customerId], references: [id])
+  paymentStatus   PaymentStatus @default(PENDING)
+  subtotalAmount  Decimal       @db.Decimal(10, 2)
+  deliveryFee     Decimal       @db.Decimal(10, 2)
+  discountAmount  Decimal       @db.Decimal(10, 2)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  shippingAddress String
+  customerNote    String?
+  placedAt        DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  vendorOrders VendorOrder[]
+
+  @@map("order")
+}
+
+model VendorOrder {
+  id             String      @id @default(uuid())
+  orderId        String
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerId       String
+  seller         User        @relation(fields: [sellerId], references: [id])
+  orderStatus    OrderStatus @default(PLACED)
+  vendorSubtotal Decimal     @db.Decimal(10, 2)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([sellerId])
+  @@index([orderId])
+  @@map("vendor_order")
+}
+
+model OrderItem {
+  id                    String      @id @default(uuid())
+  vendorOrderId         String
+  vendorOrder           VendorOrder @relation(fields: [vendorOrderId], references: [id], onDelete: Cascade)
+  medicineId            String
+  medicine              Medicine    @relation(fields: [medicineId], references: [id])
+  medicineNameSnapshot  String
+  medicineImageSnapshot String?
+  quantity              Int
+  unitPrice             Decimal     @db.Decimal(10, 2)
+  totalPrice            Decimal     @db.Decimal(10, 2)
+  createdAt             DateTime    @default(now())
+
+  @@map("order_item")
+}
+
+// ==========================================
+// REVIEWS
+// ==========================================
+
+model Review {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id])
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, medicineId])
+  @@map("review")
 }
