@@ -12,16 +12,36 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==========================================
+// BETTER AUTH ENUMS & CUSTOM FIELD ENUMS
+// ==========================================
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
+
+enum AccountStatus {
+  ACTIVE
+  BANNED
+}
+
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  role          UserRole      @default(CUSTOMER)
+  accountStatus AccountStatus @default(ACTIVE)
+  phoneNumber   String?
+  shopName      String?
+
+  sessions Session[]
+  accounts Account[]
 
   @@unique([email])
   @@map("user")
