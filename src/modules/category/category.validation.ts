@@ -21,7 +21,7 @@ const createCategoryZodSchema = z.object({
   }),
 });
 
-// 2. Used when PATCHing an existing category (everything is optional)
+// 2. Used when PATCHing an existing category
 const updateCategoryZodSchema = z.object({
   body: z.object({
     name: z
@@ -51,7 +51,14 @@ const updateCategoryZodSchema = z.object({
   }),
 });
 
+const getCategoryByIdZodSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid Category ID format. Must be a valid UUID"),
+  }),
+});
+
 export const CategoryValidation = {
   createCategoryZodSchema,
   updateCategoryZodSchema,
+  getCategoryByIdZodSchema,
 };

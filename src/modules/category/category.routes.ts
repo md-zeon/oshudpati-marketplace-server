@@ -10,7 +10,11 @@ const router: Router = Router();
 router.get("/", CategoryController.getAllCategories);
 
 // Get category by ID
-router.get("/:id", CategoryController.getCategoryById);
+router.get(
+  "/:id",
+  validateRequest(CategoryValidation.getCategoryByIdZodSchema),
+  CategoryController.getCategoryById,
+);
 
 // Add a new category (Admin only)
 router.post(
