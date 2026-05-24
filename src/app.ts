@@ -1,5 +1,9 @@
 import express, { Application } from "express";
 import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth";
+import { AuthRoutes } from "./modules/auth/auth.routes";
+import errorHandler from "./middlewares/globalErrorHandler";
 const app: Application = express();
 
 app.use(
@@ -8,11 +12,18 @@ app.use(
     credentials: true,
   }),
 );
-
 app.use(express.json());
+
+// Auth routes
+app.use("/api/auth", AuthRoutes);
+
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
+
+// Global error handler
+app.use(errorHandler);
 
 export default app;
