@@ -53,11 +53,12 @@ function errorHandler(
 
       case "P2025":
         statusCode = 404;
-        message = "Record not found.";
-        errors = err.meta?.driverAdapterError
-          ? [err.meta?.driverAdapterError]
-          : null;
+        message = err.meta?.modelName
+          ? `${err.meta.modelName} not found.`
+          : "Record not found.";
+        errors = [err.meta];
         break;
+
       default:
         message = `Prisma Error: ${err.code}`;
         errors = err.meta ? [err.meta] : null;

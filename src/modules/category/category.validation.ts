@@ -33,6 +33,13 @@ const updateCategoryZodSchema = z.object({
       .string()
       .max(500, "Description cannot exceed 500 characters")
       .optional(),
+    slug: z
+      .string()
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        "Slug must be lowercase and can only contain letters, numbers, and hyphens",
+      )
+      .optional(),
     imageUrl: z
       .string()
       .url("Invalid image layout format. Must be a valid URL")
