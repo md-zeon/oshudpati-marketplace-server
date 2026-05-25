@@ -1,6 +1,17 @@
-import { Prisma } from "../../../generated/prisma/client";
+import { OrderStatus, Prisma } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 import { calculateDeliveryFee } from "../../lib/utils";
+
+type ShippingAddressSnapshot = {
+  fullName: string;
+  phoneNumber: string;
+  division: string;
+  district: string;
+  area: string;
+  streetAddress: string;
+  postalCode?: string;
+  addressLabel?: string;
+};
 
 const generateOrderNumber = () => {
   return `ORD-${Date.now()}`;
@@ -9,7 +20,7 @@ const generateOrderNumber = () => {
 const createOrder = async (
   customerId: string,
   payload: {
-    shippingAddressSnapshot: any;
+    shippingAddressSnapshot: ShippingAddressSnapshot;
     customerNote?: string;
     items: {
       medicineId: string;
@@ -19,15 +30,21 @@ const createOrder = async (
 ) => {
   const { shippingAddressSnapshot, customerNote, items } = payload;
 
-  console.log("Creating order with payload:", payload);
-  console.log("Customer ID:", customerId);
-  console.log("Shipping Address Snapshot:", shippingAddressSnapshot);
-  console.log("Customer Note:", customerNote);
-  console.log("Items:", items);
-
   return prisma.$transaction(async (tx) => {
     // validate medicines
     const medicineIds = items.map((i) => i.medicineId);
+
+    // check for duplicate medicineIds in the order
+    const uniqueMedicineIds = new Set(medicineIds);
+
+    if (uniqueMedicineIds.size !== medicineIds.length) {
+      throw new Error("Duplicate medicines are not allowed in order", {
+        cause: {
+          name: "DuplicateMedicineError",
+          message: "Order contains duplicate medicine IDs",
+        },
+      });
+    }
 
     // fetch medicines with seller info and images
     const medicines = await tx.medicine.findMany({
@@ -40,6 +57,11 @@ const createOrder = async (
       },
     });
 
+    // create a map for quick lookup of medicines by id
+    const medicineMap = new Map(
+      medicines.map((medicine) => [medicine.id, medicine]),
+    );
+
     // check if all medicines are valid and active
     if (medicines.length !== medicineIds.length) {
       throw new Error("Some medicines are invalid or inactive");
@@ -48,12 +70,13 @@ const createOrder = async (
     // stock validation
     for (const item of items) {
       // find the medicine from the fetched list
-      const medicine = medicines.find((m) => m.id === item.medicineId)!;
+      const medicine = medicineMap.get(item.medicineId)!;
 
       // check stock
       if (medicine.stockQuantity < item.quantity) {
         throw new Error(`${medicine.name} out of stock`, {
           cause: {
+            name: "InsufficientStockError",
             message: `${medicine.name} has only ${medicine.stockQuantity} items left in stock`,
             medicineId: medicine.id,
             requestedQuantity: item.quantity,
@@ -69,7 +92,7 @@ const createOrder = async (
     // group items by sellerId
     for (const item of items) {
       // find the medicine from the fetched list
-      const medicine = medicines.find((m) => m.id === item.medicineId)!;
+      const medicine = medicineMap.get(item.medicineId)!;
 
       // initialize group if not exists
       if (!grouped[medicine.sellerId]) {
@@ -90,7 +113,7 @@ const createOrder = async (
     Object.values(grouped).forEach((list) => {
       // list is an array of { medicine, quantity }
       list.forEach(({ medicine, quantity }) => {
-        const price = Number(medicine.discountPrice || medicine.price);
+        const price = Number(medicine.discountPrice ?? medicine.price);
         subtotal += price * quantity;
       });
     });
@@ -124,7 +147,7 @@ const createOrder = async (
       let vendorSubtotal = 0;
 
       sellerItems.forEach(({ medicine, quantity }) => {
-        const price = Number(medicine.discountPrice || medicine.price);
+        const price = Number(medicine.discountPrice ?? medicine.price);
         vendorSubtotal += price * quantity;
       });
 
@@ -140,7 +163,7 @@ const createOrder = async (
       // create order items for this vendor order
       for (const item of sellerItems) {
         const medicine = item.medicine;
-        const unitPrice = Number(medicine.discountPrice || medicine.price);
+        const unitPrice = Number(medicine.discountPrice ?? medicine.price);
 
         // find primary image
         const primaryImage = medicine.images.find(
@@ -213,7 +236,80 @@ const getMyOrders = async (customerId: string) => {
   });
 };
 
+const getOrderById = async (orderId: string) => {
+  return prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    include: {
+      vendorOrders: {
+        include: {
+          orderItems: true,
+          seller: true,
+        },
+      },
+    },
+  });
+};
+
+const updateOrderStatus = async (
+  orderId: string,
+  sellerId: string,
+  newStatus: OrderStatus,
+) => {
+  // validate vendor order belongs to the seller
+  const vendorOrder = await prisma.vendorOrder.findFirstOrThrow({
+    where: {
+      orderId,
+      sellerId,
+    },
+  });
+
+  // validate if the new status is different from the current status
+  if (vendorOrder.orderStatus === newStatus) {
+    throw new Error(
+      `Order is already in ${newStatus} status. No update needed.`,
+      {
+        cause: {
+          name: "SameStatusUpdateError",
+          message: `Attempted to update order status to the same status: ${newStatus}`,
+          orderId,
+        },
+      },
+    );
+  }
+
+  // validate status transition
+  const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+    [OrderStatus.PLACED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+    [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+    [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+    [OrderStatus.DELIVERED]: [],
+    [OrderStatus.CANCELLED]: [],
+  };
+
+  if (!validTransitions[vendorOrder.orderStatus].includes(newStatus)) {
+    throw new Error(
+      `Invalid status transition from ${vendorOrder.orderStatus} to ${newStatus}`,
+      {
+        cause: {
+          name: "InvalidStatusTransitionError",
+          message: `Cannot transition order status from ${vendorOrder.orderStatus} to ${newStatus}`,
+          orderId,
+          currentStatus: vendorOrder.orderStatus,
+        },
+      },
+    );
+  }
+
+  // update status
+  return prisma.vendorOrder.update({
+    where: { id: vendorOrder.id },
+    data: { orderStatus: newStatus },
+  });
+};
+
 export const OrderService = {
   createOrder,
   getMyOrders,
+  getOrderById,
+  updateOrderStatus,
 };

@@ -17,4 +17,20 @@ router.post(
 // get my orders
 router.get("/my-orders", auth(UserRole.CUSTOMER), orderController.getMyOrders);
 
+// get order details (for customer and seller)
+router.get(
+  "/:orderId",
+  auth(UserRole.CUSTOMER, UserRole.SELLER),
+  validateRequest(OrderValidation.getOrderByIdZodSchema),
+  orderController.getOrderById,
+);
+
+// update order status (for seller)
+router.patch(
+  "/:orderId/status",
+  auth(UserRole.SELLER),
+  validateRequest(OrderValidation.updateOrderStatusZodSchema),
+  orderController.updateOrderStatus,
+);
+
 export const orderRoutes: Router = router;

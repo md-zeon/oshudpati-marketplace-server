@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OrderStatus } from "../../../generated/prisma/enums";
 
 const addressSnapshotSchema = z.object({
   fullName: z.string(),
@@ -20,7 +21,9 @@ const createOrderZodSchema = z.object({
     items: z
       .array(
         z.object({
-          medicineId: z.string().uuid(),
+          medicineId: z
+            .string()
+            .uuid("Invalid medicine identifier uuid format"),
           quantity: z.number().int().positive(),
         }),
       )
@@ -28,6 +31,25 @@ const createOrderZodSchema = z.object({
   }),
 });
 
+const getOrderByIdZodSchema = z.object({
+  params: z.object({
+    orderId: z.string().uuid("Invalid order identifier uuid format"),
+  }),
+});
+
+const updateOrderStatusZodSchema = z.object({
+  params: z.object({
+    orderId: z.string().uuid("Invalid order identifier uuid format"),
+  }),
+  body: z.object({
+    status: z.nativeEnum(OrderStatus, {
+      error: `Status must be one of: ${Object.values(OrderStatus).join(", ")}`,
+    }),
+  }),
+});
+
 export const OrderValidation = {
   createOrderZodSchema,
+  getOrderByIdZodSchema,
+  updateOrderStatusZodSchema,
 };
