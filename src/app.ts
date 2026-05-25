@@ -10,6 +10,8 @@ import { UserRoutes } from "./modules/user/user.routes";
 import { orderRoutes } from "./modules/order/order.routes";
 import { CartRoutes } from "./modules/cart/cart.routes";
 import { AddressRoutes } from "./modules/address/address.routes";
+import { notFoundHandler } from "./middlewares/notFound";
+import { ReviewRoutes } from "./modules/review/review.routes";
 const app: Application = express();
 
 app.use(
@@ -42,10 +44,16 @@ app.use("/api/cart", CartRoutes);
 // Address routes
 app.use("/api/addresses", AddressRoutes);
 
+// Review routes
+app.use("/api/reviews", ReviewRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.send("Oshudpati Marketplace API is running!");
 });
+
+// 404 handler
+app.use(notFoundHandler);
 
 // Global error handler
 app.use(errorHandler);

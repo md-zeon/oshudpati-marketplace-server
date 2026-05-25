@@ -19,7 +19,9 @@ export const parsePaginationParams = (
   sortOrder: "asc" | "desc";
 } => {
   const page = isNaN(Number(query.page)) ? 1 : Number(query.page);
-  const limit = isNaN(Number(query.limit)) ? 10 : Number(query.limit);
+  const limit = isNaN(Number(query.limit))
+    ? 10
+    : Math.min(Number(query.limit), 50);
   const skip = (page - 1) * limit;
   const sortBy = query.sortBy || "createdAt";
   const sortOrder = query.sortOrder === "desc" ? "desc" : "asc";
@@ -27,7 +29,7 @@ export const parsePaginationParams = (
 };
 
 export const generateOrderNumber = (): string => {
-  return `ORD-${Date.now()}`;
+  return `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 };
 
 export const calculateDeliveryFee = (subtotal: number): number => {
