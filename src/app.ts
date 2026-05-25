@@ -7,6 +7,7 @@ import errorHandler from "./middlewares/globalErrorHandler";
 import { CategoryRoutes } from "./modules/category/category.routes";
 import { MedicineRoutes } from "./modules/medicine/medicine.routes";
 import { UserRoutes } from "./modules/user/user.routes";
+import { orderRoutes } from "./modules/order/order.routes";
 const app: Application = express();
 
 app.use(
@@ -30,8 +31,12 @@ app.use("/api/medicines", MedicineRoutes);
 // User routes
 app.use("/api/users", UserRoutes);
 
+// Order routes
+app.use("/api/orders", orderRoutes);
+
+// Test route
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("Oshudpati Marketplace API is running!");
 });
 
 // Global error handler

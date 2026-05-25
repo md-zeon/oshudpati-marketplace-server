@@ -9,11 +9,31 @@ export const generateSlug = (...inputs: string[]): string => {
   return slug;
 };
 
-export const parsePaginationParams = (query: any) => {
+export const parsePaginationParams = (
+  query: any,
+): {
+  page: number;
+  limit: number;
+  skip: number;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+} => {
   const page = isNaN(Number(query.page)) ? 1 : Number(query.page);
   const limit = isNaN(Number(query.limit)) ? 10 : Number(query.limit);
   const skip = (page - 1) * limit;
   const sortBy = query.sortBy || "createdAt";
   const sortOrder = query.sortOrder === "desc" ? "desc" : "asc";
   return { page, limit, skip, sortBy, sortOrder };
+};
+
+export const generateOrderNumber = (): string => {
+  return `ORD-${Date.now()}`;
+};
+
+export const calculateDeliveryFee = (subtotal: number): number => {
+  if (subtotal >= 300) {
+    return 0; // Free delivery for orders above or equal to 300 Taka
+  }
+
+  return 60;
 };
