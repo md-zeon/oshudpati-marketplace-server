@@ -8,6 +8,7 @@ import { CategoryRoutes } from "./modules/category/category.routes";
 import { MedicineRoutes } from "./modules/medicine/medicine.routes";
 import { UserRoutes } from "./modules/user/user.routes";
 import { orderRoutes } from "./modules/order/order.routes";
+import { CartRoutes } from "./modules/cart/cart.routes";
 const app: Application = express();
 
 app.use(
@@ -33,6 +34,9 @@ app.use("/api/users", UserRoutes);
 
 // Order routes
 app.use("/api/orders", orderRoutes);
+
+// Cart routes
+app.use("/api/cart", CartRoutes);
 
 // Test route
 app.get("/", (req, res) => {

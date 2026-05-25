@@ -231,6 +231,8 @@ model CartItem {
   updatedAt  DateTime @updatedAt
 
   @@unique([userId, medicineId])
+  @@index([userId])
+  @@index([medicineId])
   @@map("cart_item")
 }
 
