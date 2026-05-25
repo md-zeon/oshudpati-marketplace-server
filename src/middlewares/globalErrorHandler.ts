@@ -65,6 +65,15 @@ function errorHandler(
         break;
     }
   }
+  // Handle PrismaClientValidationError
+  else if (err instanceof Prisma.PrismaClientValidationError) {
+    statusCode = 400;
+    return res.status(statusCode).json({
+      success,
+      message: err.message,
+      errors: err,
+    });
+  }
 
   // Handle Node.js built-in errors and other generic errors
   else if (err instanceof Error) {
@@ -77,7 +86,6 @@ function errorHandler(
     ];
   }
 
-  // Handle PrismaClientValidationError
   // Handle PrismaClientUnknownRequestError
   // Handle PrismaClientRustPanicError
   // Handle PrismaClientInitializationError

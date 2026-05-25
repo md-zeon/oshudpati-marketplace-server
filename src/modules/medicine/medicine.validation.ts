@@ -5,9 +5,7 @@ const createMedicineZodSchema = z.object({
   body: z
     .object({
       name: z.string({ error: "Medicine name is required" }).min(1),
-      genericName: z
-        .string({ error: "Generic genericName is required" })
-        .min(1),
+      genericName: z.string({ error: "Generic name is required" }).min(1),
       shortDescription: z.string().max(255).optional(),
       description: z.string().optional(),
       indications: z.string().optional(),
@@ -28,16 +26,29 @@ const createMedicineZodSchema = z.object({
       price: z
         .number({ error: "Base price is required" })
         .positive("Price must be greater than 0"),
-      discountPrice: z.number().positive().optional(),
+      discountPrice: z
+        .number("Discount price must be a number")
+        .positive("Discount price must be a positive number")
+        .optional(),
       stockQuantity: z
-        .number()
-        .int()
-        .nonnegative("Stock cannot be negative")
+        .number("Stock quantity must be a number")
+        .int("Stock quantity must be an integer")
+        .nonnegative("Stock quantity must be a non-negative integer")
         .default(0),
-      isFeatured: z.boolean().optional(),
-      categoryId: z
-        .string({ error: "Category ID relation mapping is required" })
-        .uuid("Invalid Category ID"),
+      isFeatured: z.boolean("Featured status must be a boolean").optional(),
+      categoryId: z.string({ error: "Category ID is required" }).uuid(),
+
+      images: z
+        .array(
+          z.object({
+            imageUrl: z.string().url("Each image must have a valid URL format"),
+            altText: z.string("Alt text must be a string").optional(),
+            isPrimary: z
+              .boolean("Primary image status must be a boolean")
+              .default(false),
+          }),
+        )
+        .min(1, "You must provide at least one image for the medicine listing"),
     })
     .refine(
       (data) => {
