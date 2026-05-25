@@ -39,7 +39,7 @@ const createMedicine = async (
       })),
     });
 
-    return tx.medicine.findUnique({
+    return tx.medicine.findUniqueOrThrow({
       where: { id: medicine.id },
       include: {
         category: true,
@@ -111,7 +111,152 @@ const getAllMedicines = async (
   return { medicines, meta };
 };
 
+const getMedicineById = async (id: string) => {
+  return await prisma.medicine.findUniqueOrThrow({
+    where: { id, isActive: true },
+    include: {
+      category: true,
+      images: true,
+    },
+  });
+};
+
+const getMedicineBySlug = async (slug: string) => {
+  return await prisma.medicine.findUniqueOrThrow({
+    where: { slug, isActive: true },
+    include: {
+      category: true,
+      images: true,
+    },
+  });
+};
+
+const updateMedicine = async (
+  medicineId: string,
+  payload: {
+    images?: {
+      id?: string;
+      imageUrl: string;
+      altText?: string;
+      isPrimary?: boolean;
+    }[];
+  } & Partial<
+    Omit<Medicine, "id" | "sellerId" | "createdAt" | "updatedAt" | "slug">
+  >,
+) => {
+  const { images, price, discountPrice, ...medicineData } = payload;
+
+  return prisma.$transaction(async (tx) => {
+    const existingMedicine = await tx.medicine.findUniqueOrThrow({
+      where: { id: medicineId, isActive: true },
+      include: { images: true },
+    });
+
+    // Regenerate slug if important fields changed
+    const slug = generateSlug(
+      medicineData.name || existingMedicine.name,
+      medicineData.strength ||
+        existingMedicine.strength ||
+        existingMedicine.genericName,
+      medicineData.dosageForm || existingMedicine.dosageForm,
+    );
+
+    // Update medicine
+    const updatedMedicine = await tx.medicine.update({
+      where: { id: medicineId, isActive: true },
+      data: {
+        ...medicineData,
+        slug,
+        price: price !== undefined ? Number(price) : existingMedicine.price,
+        discountPrice:
+          discountPrice !== undefined
+            ? Number(discountPrice)
+            : existingMedicine.discountPrice,
+      },
+    });
+
+    // Handle images
+    if (images) {
+      const incomingIds = images
+        .filter((img) => img.id)
+        .map((img) => img.id as string);
+
+      // Delete removed images
+      await tx.medicineImage.deleteMany({
+        where: {
+          medicineId,
+          id: {
+            notIn: incomingIds,
+          },
+        },
+      });
+
+      // Upsert remaining/new images
+      for (const img of images) {
+        // If img has an ID, update it; otherwise, create a new one
+        if (img.id) {
+          await tx.medicineImage.update({
+            where: { id: img.id },
+            data: {
+              imageUrl:
+                img.imageUrl ||
+                (existingMedicine.images.find((i) => i.id === img.id)
+                  ?.imageUrl as string),
+              altText:
+                img.altText ||
+                (existingMedicine.images.find((i) => i.id === img.id)
+                  ?.altText as string),
+              isPrimary:
+                img.isPrimary !== undefined
+                  ? img.isPrimary
+                  : (existingMedicine.images.find((i) => i.id === img.id)
+                      ?.isPrimary as boolean) || false,
+            },
+          });
+        } else {
+          await tx.medicineImage.create({
+            data: {
+              medicineId,
+              imageUrl: img.imageUrl as string,
+              altText: img.altText || null,
+              isPrimary: img.isPrimary || false,
+            },
+          });
+        }
+      }
+    }
+
+    return tx.medicine.findUniqueOrThrow({
+      where: { id: updatedMedicine.id },
+      include: {
+        category: true,
+        images: true,
+      },
+    });
+  });
+};
+
+// Soft delete a medicine
+const deleteMedicineSoft = async (medicineId: string) => {
+  return await prisma.medicine.update({
+    where: { id: medicineId, isActive: true },
+    data: { isActive: false },
+  });
+};
+
+// Hard delete a medicine
+const deleteMedicine = async (medicineId: string) => {
+  return await prisma.medicine.delete({
+    where: { id: medicineId },
+  });
+};
+
 export const MedicineService = {
   createMedicine,
   getAllMedicines,
+  getMedicineById,
+  getMedicineBySlug,
+  updateMedicine,
+  deleteMedicineSoft,
+  deleteMedicine,
 };
