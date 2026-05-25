@@ -1,5 +1,21 @@
 import { prisma } from "../../lib/prisma";
 
+const recalcMedicineRating = async (tx: any, medicineId: string) => {
+  const stats = await tx.review.aggregate({
+    where: { medicineId },
+    _avg: { rating: true },
+    _count: { rating: true },
+  });
+
+  await tx.medicine.update({
+    where: { id: medicineId },
+    data: {
+      averageRating: stats._avg.rating ?? 0,
+      reviewCount: stats._count.rating,
+    },
+  });
+};
+
 const createReview = async (
   customerId: string,
   payload: {
@@ -9,7 +25,27 @@ const createReview = async (
   },
 ) => {
   return prisma.$transaction(async (tx) => {
-    // prevent duplicate review (extra safety)
+    const hasPurchased = await tx.orderItem.findFirst({
+      where: {
+        medicineId: payload.medicineId,
+        vendorOrder: {
+          order: {
+            customerId,
+          },
+        },
+      },
+    });
+
+    if (!hasPurchased) {
+      throw new Error("You can only review purchased medicines", {
+        cause: {
+          name: "UnauthorizedReviewError",
+          medicineId: payload.medicineId,
+        },
+      });
+    }
+
+    // prevent duplicate review
     const existing = await tx.review.findUnique({
       where: {
         customerId_medicineId: {
@@ -20,7 +56,12 @@ const createReview = async (
     });
 
     if (existing) {
-      throw new Error("You have already reviewed this medicine");
+      throw new Error("You have already reviewed this medicine", {
+        cause: {
+          name: "DuplicateReviewError",
+          medicineId: payload.medicineId,
+        },
+      });
     }
 
     const review = await tx.review.create({
@@ -30,21 +71,7 @@ const createReview = async (
       },
     });
 
-    // update medicine stats
-    const reviews = await tx.review.findMany({
-      where: { medicineId: payload.medicineId },
-    });
-
-    const avgRating =
-      reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-    await tx.medicine.update({
-      where: { id: payload.medicineId },
-      data: {
-        averageRating: avgRating,
-        reviewCount: reviews.length,
-      },
-    });
+    await recalcMedicineRating(tx, payload.medicineId);
 
     return review;
   });
@@ -83,20 +110,7 @@ const updateReview = async (
       data: payload,
     });
 
-    // recalculate rating
-    const reviews = await tx.review.findMany({
-      where: { medicineId: review.medicineId },
-    });
-
-    const avgRating =
-      reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-    await tx.medicine.update({
-      where: { id: review.medicineId },
-      data: {
-        averageRating: avgRating,
-      },
-    });
+    await recalcMedicineRating(tx, review.medicineId);
 
     return updated;
   });
@@ -112,22 +126,8 @@ const deleteReview = async (customerId: string, reviewId: string) => {
       where: { id: review.id },
     });
 
-    const reviews = await tx.review.findMany({
-      where: { medicineId: review.medicineId },
-    });
-
-    const avgRating =
-      reviews.length === 0
-        ? 0
-        : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-    await tx.medicine.update({
-      where: { id: review.medicineId },
-      data: {
-        averageRating: avgRating,
-        reviewCount: reviews.length,
-      },
-    });
+    // recalculate rating and review count and update medicine stats
+    await recalcMedicineRating(tx, review.medicineId);
 
     return true;
   });
