@@ -140,6 +140,7 @@ const deleteMedicineSoft = async (
     res.status(200).json({
       success: true,
       message: "Medicine deleted successfully",
+      data: null,
     });
   } catch (error) {
     next(error);

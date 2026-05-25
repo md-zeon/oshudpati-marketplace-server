@@ -9,6 +9,7 @@ import { MedicineRoutes } from "./modules/medicine/medicine.routes";
 import { UserRoutes } from "./modules/user/user.routes";
 import { orderRoutes } from "./modules/order/order.routes";
 import { CartRoutes } from "./modules/cart/cart.routes";
+import { AddressRoutes } from "./modules/address/address.routes";
 const app: Application = express();
 
 app.use(
@@ -37,6 +38,9 @@ app.use("/api/orders", orderRoutes);
 
 // Cart routes
 app.use("/api/cart", CartRoutes);
+
+// Address routes
+app.use("/api/addresses", AddressRoutes);
 
 // Test route
 app.get("/", (req, res) => {
