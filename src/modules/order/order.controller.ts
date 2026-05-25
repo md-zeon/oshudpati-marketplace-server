@@ -20,6 +20,23 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const getMyOrders = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const customerId = req.user?.id;
+
+    const orders = await OrderService.getMyOrders(customerId as string);
+
+    res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully",
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const orderController = {
   createOrder,
+  getMyOrders,
 };

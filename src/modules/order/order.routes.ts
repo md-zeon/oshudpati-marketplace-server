@@ -14,4 +14,7 @@ router.post(
   orderController.createOrder,
 );
 
+// get my orders
+router.get("/my-orders", auth(UserRole.CUSTOMER), orderController.getMyOrders);
+
 export const orderRoutes: Router = router;
