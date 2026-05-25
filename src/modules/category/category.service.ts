@@ -100,10 +100,21 @@ const updateCategory = async (
   return res;
 };
 
+const deleteCategorySoft = async (id: string) => {
+  const res = await prisma.category.update({
+    where: { id },
+    data: { isActive: false },
+    select: categorySelect,
+  });
+
+  return res;
+};
+
 export const CategoryService = {
   getAllCategories,
   createCategory,
   updateCategory,
   getCategoryById,
   getCategoryBySlug,
+  deleteCategorySoft,
 };

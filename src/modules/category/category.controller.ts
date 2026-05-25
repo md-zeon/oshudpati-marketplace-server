@@ -97,10 +97,31 @@ const updateCategory = async (
   }
 };
 
+const deleteCategorySoft = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await CategoryService.getCategoryById(req.params.id as string); // will throw an error if category doesn't exist
+
+    await CategoryService.deleteCategorySoft(req.params.id as string);
+
+    res.status(200).json({
+      success: true,
+      message: "Category deleted successfully",
+      data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const CategoryController = {
   getAllCategories,
   getCategoryById,
   createCategory,
   updateCategory,
   getCategoryBySlug,
+  deleteCategorySoft,
 };
