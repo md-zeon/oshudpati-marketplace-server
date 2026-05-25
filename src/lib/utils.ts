@@ -10,8 +10,8 @@ export const generateSlug = (...inputs: string[]): string => {
 };
 
 export const parsePaginationParams = (query: any) => {
-  const page = Number(query.page) || 1;
-  const limit = Number(query.limit) || 10;
+  const page = isNaN(Number(query.page)) ? 1 : Number(query.page);
+  const limit = isNaN(Number(query.limit)) ? 10 : Number(query.limit);
   const skip = (page - 1) * limit;
   const sortBy = query.sortBy || "createdAt";
   const sortOrder = query.sortOrder === "desc" ? "desc" : "asc";
