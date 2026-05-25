@@ -16,6 +16,13 @@ router.get(
   CategoryController.getCategoryById,
 );
 
+// Get category by slug
+router.get(
+  "/slug/:slug",
+  validateRequest(CategoryValidation.getCategoryBySlugZodSchema),
+  CategoryController.getCategoryBySlug,
+);
+
 // Add a new category (Admin only)
 router.post(
   "/",

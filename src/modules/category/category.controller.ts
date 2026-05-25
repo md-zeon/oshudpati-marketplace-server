@@ -37,6 +37,26 @@ const getCategoryById = async (
   }
 };
 
+const getCategoryBySlug = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const category = await CategoryService.getCategoryBySlug(
+      req.params.slug as string,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Category retrieved successfully",
+      data: category,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createCategory = async (
   req: Request,
   res: Response,
@@ -82,4 +102,5 @@ export const CategoryController = {
   getCategoryById,
   createCategory,
   updateCategory,
+  getCategoryBySlug,
 };
