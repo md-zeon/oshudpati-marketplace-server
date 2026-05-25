@@ -44,7 +44,7 @@ const getOrderById = async (
 ) => {
   try {
     const orderId = req.params.orderId;
-    const order = await OrderService.getOrderById(orderId as string);
+    const order = await OrderService.getOrderById(orderId as string, req.user);
 
     res.status(200).json({
       success: true,
@@ -64,7 +64,7 @@ const updateOrderStatus = async (
   try {
     const orderId = req.params.orderId;
     const sellerId = req.user?.id;
-    const newStatus = req.body.newStatus;
+    const newStatus = req.body.status;
 
     const updatedOrder = await OrderService.updateOrderStatus(
       orderId as string,

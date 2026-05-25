@@ -236,8 +236,8 @@ const getMyOrders = async (customerId: string) => {
   });
 };
 
-const getOrderById = async (orderId: string) => {
-  return prisma.order.findUniqueOrThrow({
+const getOrderById = async (orderId: string, user: any) => {
+  const order = await prisma.order.findUniqueOrThrow({
     where: { id: orderId },
     include: {
       vendorOrders: {
@@ -248,6 +248,31 @@ const getOrderById = async (orderId: string) => {
       },
     },
   });
+
+  // authorization check
+  if (user.role === "CUSTOMER" && order.customerId !== user.id) {
+    throw new Error("You are not allowed to access this order");
+  }
+
+  // if user is seller, check if any of the vendor orders belong to the seller
+  if (user.role === "SELLER") {
+    const hasVendorOrder = order.vendorOrders.some(
+      (v) => v.sellerId === user.id,
+    );
+
+    if (!hasVendorOrder) {
+      throw new Error("You are not allowed to access this order", {
+        cause: {
+          name: "UnauthorizedAccessError",
+          message: `Seller with ID ${user.id} attempted to access order ${orderId} without authorization`,
+          orderId,
+          sellerId: user.id,
+        },
+      });
+    }
+  }
+
+  return order;
 };
 
 const updateOrderStatus = async (
