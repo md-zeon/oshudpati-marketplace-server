@@ -17,6 +17,9 @@ router.post(
 // get my cart
 router.get("/", auth(UserRole.CUSTOMER), CartController.getMyCart);
 
+// get cart summary
+router.get("/summary", auth(UserRole.CUSTOMER), CartController.getCartSummary);
+
 // update cart item quantity
 router.patch(
   "/:id",

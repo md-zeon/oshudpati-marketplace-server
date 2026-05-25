@@ -149,6 +149,58 @@ const updateCartItemQuantity = async (
   });
 };
 
+const getCartSummary = async (userId: string) => {
+  const cartItems = await prisma.cartItem.findMany({
+    where: { userId },
+    include: {
+      medicine: {
+        include: {
+          images: true,
+        },
+      },
+    },
+  });
+
+  let subtotal = 0;
+  let totalDiscount = 0;
+  let totalItems = 0;
+
+  const items = cartItems.map((item) => {
+    const price = Number(item.medicine.price);
+    const discountPrice = item.medicine.discountPrice
+      ? Number(item.medicine.discountPrice)
+      : price;
+
+    const itemSubtotal = discountPrice * item.quantity;
+    const originalSubtotal = price * item.quantity;
+
+    subtotal += itemSubtotal;
+    totalDiscount += originalSubtotal - itemSubtotal;
+    totalItems += item.quantity;
+
+    return {
+      id: item.id,
+      quantity: item.quantity,
+      medicine: {
+        id: item.medicine.id,
+        name: item.medicine.name,
+        price: item.medicine.price,
+        discountPrice: item.medicine.discountPrice,
+        images: item.medicine.images,
+      },
+      subtotal: itemSubtotal,
+    };
+  });
+
+  return {
+    items,
+    totalItems,
+    subtotal,
+    totalDiscount,
+    finalTotal: subtotal,
+  };
+};
+
 const removeCartItem = async (userId: string, cartItemId: string) => {
   // validate ownership
   await prisma.cartItem.findFirstOrThrow({
@@ -176,6 +228,7 @@ const clearCart = async (userId: string) => {
 export const CartService = {
   addToCart,
   getMyCart,
+  getCartSummary,
   updateCartItemQuantity,
   removeCartItem,
   clearCart,

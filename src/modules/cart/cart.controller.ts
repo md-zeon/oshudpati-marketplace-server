@@ -35,7 +35,7 @@ const getMyCart = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const updateCartItemQuantity = async (
+const getCartSummary = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -43,10 +43,31 @@ const updateCartItemQuantity = async (
   try {
     const userId = req.user?.id as string;
 
+    const summary = await CartService.getCartSummary(userId);
+
+    res.json({
+      success: true,
+      message: "Cart summary fetched successfully",
+      data: summary,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateCartItemQuantity = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id as string;
+    const { quantity } = req.body;
+
     const updatedCartItem = await CartService.updateCartItemQuantity(
       userId,
       req.params.id as string,
-      req.body.quantity,
+      quantity,
     );
 
     res.json({
@@ -98,6 +119,7 @@ const clearCart = async (req: Request, res: Response, next: NextFunction) => {
 export const CartController = {
   addToCart,
   getMyCart,
+  getCartSummary,
   updateCartItemQuantity,
   removeCartItem,
   clearCart,
