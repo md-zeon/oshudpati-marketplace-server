@@ -66,51 +66,55 @@ const createMedicineZodSchema = z.object({
 });
 
 const updateMedicineZodSchema = z.object({
-  body: z.object({
-    name: z.string().optional(),
-    genericName: z.string().optional(),
-    shortDescription: z.string().max(255).optional(),
-    description: z.string().optional(),
-    indications: z.string().optional(),
-    dosageInstructions: z.string().optional(),
-    sideEffects: z.string().optional(),
-    manufacturerName: z.string().optional(),
-    brandName: z.string().optional(),
-    dosageForm: z.nativeEnum(DosageForm).optional(),
-    strength: z.string().optional(),
-    unitPresentation: z.string().optional(),
-    sku: z.string().optional(),
-    price: z.number("Price must be a number").positive().optional(),
-    discountPrice: z
-      .number("Discount price must be a number")
-      .positive("Discount price must be a positive number")
-      .optional(),
-    stockQuantity: z
-      .number("Stock quantity must be a number")
-      .int("Stock quantity must be an integer")
-      .nonnegative("Stock quantity must be a non-negative integer")
-      .optional(),
-    isFeatured: z.boolean("Featured status must be a boolean").optional(),
-    isActive: z.boolean("Active status must be a boolean").optional(),
-    categoryId: z
-      .string()
-      .uuid("Invalid category identifier UUID format")
-      .optional(),
-  }),
-  images: z
-    .array(
-      z.object({
-        id: z.string().uuid("Invalid image identifier UUID format").optional(),
-        imageUrl: z.url("Invalid image URL"),
-        altText: z.string("Alt text must be a string").optional(),
-        isPrimary: z
-          .boolean("Primary image status must be a boolean")
-          .optional(),
-      }),
-    )
-    .optional(),
+  body: z
+    .object({
+      name: z.string().optional(),
+      genericName: z.string().optional(),
+      shortDescription: z.string().max(255).optional(),
+      description: z.string().optional(),
+      indications: z.string().optional(),
+      dosageInstructions: z.string().optional(),
+      sideEffects: z.string().optional(),
+      manufacturerName: z.string().optional(),
+      brandName: z.string().optional(),
+      dosageForm: z.nativeEnum(DosageForm).optional(),
+      strength: z.string().optional(),
+      unitPresentation: z.string().optional(),
+      sku: z.string().optional(),
+      price: z.number("Price must be a number").positive().optional(),
+      discountPrice: z
+        .number("Discount price must be a number")
+        .positive("Discount price must be a positive number")
+        .optional(),
+      stockQuantity: z
+        .number("Stock quantity must be a number")
+        .int("Stock quantity must be an integer")
+        .nonnegative("Stock quantity must be a non-negative integer")
+        .optional(),
+      isFeatured: z.boolean("Featured status must be a boolean").optional(),
+      isActive: z.boolean("Active status must be a boolean").optional(),
+      categoryId: z
+        .string()
+        .uuid("Invalid category identifier UUID format")
+        .optional(),
+
+      images: z
+        .array(
+          z.object({
+            id: z.string().uuid().optional(),
+            imageUrl: z.string().url(),
+            altText: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "At least one field is required to update medicine",
+    }),
+
   params: z.object({
-    id: z.string().uuid("Invalid Medicine identifier UUID format"),
+    id: z.string().uuid(),
   }),
 });
 

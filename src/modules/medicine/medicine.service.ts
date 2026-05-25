@@ -239,7 +239,7 @@ const updateMedicine = async (
 // Soft delete a medicine
 const deleteMedicineSoft = async (medicineId: string) => {
   return await prisma.medicine.update({
-    where: { id: medicineId, isActive: true },
+    where: { id: medicineId },
     data: { isActive: false },
   });
 };
