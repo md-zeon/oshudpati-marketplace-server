@@ -3,13 +3,16 @@ import { UserService } from "./user.service";
 
 const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const users = await UserService.getAllUsers();
+    const result = await UserService.getAllUsers(req.query);
 
     res.json({
       success: true,
       message:
-        users.length > 0 ? "Users retrieved successfully" : "No users found",
-      data: users,
+        result.data.length > 0
+          ? "Users retrieved successfully"
+          : "No users found",
+      meta: result.meta,
+      data: result.data,
     });
   } catch (error) {
     next(error);

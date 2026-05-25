@@ -1,13 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { auth as betterAuth } from "../lib/auth";
-
-export enum UserRole {
-  CUSTOMER = "CUSTOMER",
-  SELLER = "SELLER",
-  ADMIN = "ADMIN",
-}
-
-export type AccountStatus = "ACTIVE" | "BANNED";
+import { AccountStatus, UserRole } from "../../generated/prisma/enums";
 
 declare global {
   namespace Express {
@@ -16,7 +9,7 @@ declare global {
         id: string;
         email: string;
         name: string;
-        role: string;
+        role: UserRole;
         emailVerified: boolean;
         accountStatus: AccountStatus;
       };
@@ -38,7 +31,7 @@ const auth = (...roles: UserRole[]) => {
         });
       }
 
-      if (session.user.accountStatus === "BANNED") {
+      if (session.user.accountStatus === AccountStatus.BANNED) {
         return res.status(403).json({
           success: false,
           message: "Your account has been banned. Please contact support.",
@@ -80,5 +73,7 @@ const auth = (...roles: UserRole[]) => {
     }
   };
 };
+
+export { UserRole };
 
 export default auth;
