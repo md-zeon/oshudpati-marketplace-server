@@ -94,8 +94,49 @@ const updateUserAccountStatus = async (
   });
 };
 
+const updateProfile = async (
+  userId: string,
+  payload: any,
+  currentUser: any,
+) => {
+  // Prevent customers/admin from updating shopName
+  if (payload.shopName && currentUser.role !== UserRole.SELLER) {
+    throw new Error("Only sellers can update shop name", {
+      cause: "FORBIDDEN",
+    });
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+
+    data: {
+      name: payload.name,
+      phoneNumber: payload.phoneNumber,
+      image: payload.image,
+      ...(currentUser.role === UserRole.SELLER && {
+        shopName: payload.shopName,
+      }),
+    },
+
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      phoneNumber: true,
+      shopName: true,
+      emailVerified: true,
+      accountStatus: true,
+    },
+  });
+
+  return updatedUser;
+};
+
 export const UserService = {
   getAllUsers,
   getUserById,
   updateUserAccountStatus,
+  updateProfile,
 };

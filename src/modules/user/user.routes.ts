@@ -17,4 +17,12 @@ router.patch(
   UserController.updateUserAccountStatus,
 );
 
+// Update user profile
+router.patch(
+  "/profile",
+  auth(UserRole.CUSTOMER, UserRole.SELLER, UserRole.ADMIN),
+  validateRequest(UserValidation.updateProfileZodSchema),
+  UserController.updateProfile,
+);
+
 export const UserRoutes = router;

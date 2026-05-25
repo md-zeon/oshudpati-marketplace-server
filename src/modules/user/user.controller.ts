@@ -63,7 +63,32 @@ const updateUserAccountStatus = async (
   }
 };
 
+const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user!.id;
+
+    const updatedUser = await UserService.updateProfile(
+      userId,
+      req.body,
+      req.user!,
+    );
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const UserController = {
   getAllUsers,
   updateUserAccountStatus,
+  updateProfile,
 };

@@ -12,6 +12,17 @@ const updateUserAccountStatusZodSchema = z.object({
   }),
 });
 
+const updateProfileZodSchema = z.object({
+  body: z.object({
+    name: z.string().min(2).optional(),
+    phoneNumber: z.string().optional(),
+    image: z.string().url().optional(),
+
+    shopName: z.string().optional(),
+  }),
+});
+
 export const UserValidation = {
   updateUserAccountStatusZodSchema,
+  updateProfileZodSchema,
 };
