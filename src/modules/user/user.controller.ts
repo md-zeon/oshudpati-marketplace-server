@@ -71,11 +71,7 @@ const updateProfile = async (
   try {
     const userId = req.user!.id;
 
-    const updatedUser = await UserService.updateProfile(
-      userId,
-      req.body,
-      req.user!,
-    );
+    const updatedUser = await UserService.updateProfile(userId, req.body);
 
     res.json({
       success: true,

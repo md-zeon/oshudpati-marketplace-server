@@ -48,10 +48,6 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
-      shopName: {
-        type: "string",
-        required: false,
-      },
     },
   },
   emailVerification: {

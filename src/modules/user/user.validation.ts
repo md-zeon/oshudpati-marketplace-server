@@ -17,8 +17,6 @@ const updateProfileZodSchema = z.object({
     name: z.string().min(2).optional(),
     phoneNumber: z.string().optional(),
     image: z.string().url().optional(),
-
-    shopName: z.string().optional(),
   }),
 });
 

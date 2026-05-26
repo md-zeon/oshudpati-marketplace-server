@@ -38,7 +38,6 @@ const getAllUsers = async (query: Record<string, any>) => {
   }
 
   const [users, total] = await Promise.all([
-    // Fetch users with pagination and sorting
     prisma.user.findMany({
       where: whereConditions,
       skip,
@@ -54,12 +53,19 @@ const getAllUsers = async (query: Record<string, any>) => {
         accountStatus: true,
         image: true,
         phoneNumber: true,
-        shopName: true,
         emailVerified: true,
         createdAt: true,
+
+        shop: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
       },
     }),
-    // Count total users matching the filters
+
     prisma.user.count({
       where: whereConditions,
     }),
@@ -94,40 +100,13 @@ const updateUserAccountStatus = async (
   });
 };
 
-const updateProfile = async (
-  userId: string,
-  payload: any,
-  currentUser: any,
-) => {
-  // Prevent customers/admin from updating shopName
-  if (payload.shopName && currentUser.role !== UserRole.SELLER) {
-    throw new Error("Only sellers can update shop name", {
-      cause: "FORBIDDEN",
-    });
-  }
-
+const updateProfile = async (userId: string, payload: any) => {
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-
     data: {
       name: payload.name,
       phoneNumber: payload.phoneNumber,
       image: payload.image,
-      ...(currentUser.role === UserRole.SELLER && {
-        shopName: payload.shopName,
-      }),
-    },
-
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      image: true,
-      phoneNumber: true,
-      shopName: true,
-      emailVerified: true,
-      accountStatus: true,
     },
   });
 

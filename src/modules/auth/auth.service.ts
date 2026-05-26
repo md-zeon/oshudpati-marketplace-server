@@ -10,7 +10,6 @@ const getCurrentUser = async (userId: string) => {
       role: true,
       image: true,
       phoneNumber: true,
-      shopName: true,
       emailVerified: true,
       accountStatus: true,
       createdAt: true,

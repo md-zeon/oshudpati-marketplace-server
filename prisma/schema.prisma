@@ -38,7 +38,6 @@ model User {
   role          UserRole      @default(CUSTOMER)
   accountStatus AccountStatus @default(ACTIVE)
   phoneNumber   String?
-  shopName      String?
 
   sessions Session[]
   accounts Account[]
@@ -49,6 +48,7 @@ model User {
   orders       Order[] // For customers: orders they have placed
   vendorOrders VendorOrder[] // For sellers: orders they need to fulfill
   reviews      Review[] // For customers: reviews they have written
+  shop         Shop? // For sellers: their shop (if they have one)
 
   @@unique([email])
   @@map("user")
@@ -326,4 +326,27 @@ model Review {
 
   @@unique([customerId, medicineId])
   @@map("review")
+}
+
+// ==========================================
+// SHOPS MODEL
+// ==========================================
+
+model Shop {
+  id       String @id @default(uuid())
+  sellerId String @unique
+  seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  name        String
+  slug        String  @unique
+  logo        String?
+  banner      String?
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shop")
 }
