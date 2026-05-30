@@ -84,11 +84,22 @@ const getMyCart = async (userId: string) => {
       userId,
     },
 
-    include: {
+    select: {
+      id: true,
+      userId: true,
+      medicineId: true,
+      quantity: true,
+
       medicine: {
-        include: {
+        select: {
+          id: true,
+          name: true,
+          genericName: true,
+          slug: true,
+          price: true,
+          discountPrice: true,
+          stockQuantity: true,
           images: true,
-          seller: true,
         },
       },
     },
