@@ -110,6 +110,80 @@ const getMyCart = async (userId: string) => {
   });
 };
 
+const mergeGuestCart = async (
+  userId: string,
+  items: {
+    medicineId: string;
+    quantity: number;
+  }[],
+) => {
+  return prisma.$transaction(async (tx) => {
+    // If the guest cart was empty, skip queries completely
+    if (!items || items.length === 0) return null;
+
+    for (const guestItem of items) {
+      const { medicineId, quantity } = guestItem;
+
+      // Validate medicine existence and activity state
+      const medicine = await tx.medicine.findUniqueOrThrow({
+        where: {
+          id: medicineId,
+          isActive: true,
+        },
+      });
+
+      // Check if this medicine is already in the user's database cart
+      const existingCartItem = await tx.cartItem.findUnique({
+        where: {
+          userId_medicineId: {
+            userId,
+            medicineId,
+          },
+        },
+      });
+
+      //  Combine quantities (existing DB quantity + incoming guest quantity)
+      const totalQuantity = (existingCartItem?.quantity || 0) + quantity;
+
+      //  Verify combined total satisfies inventory allocations
+      if (totalQuantity > medicine.stockQuantity) {
+        throw new Error(
+          `Cannot merge: Only ${medicine.stockQuantity} items available for ${medicine.name}`,
+          {
+            cause: {
+              name: "StockError",
+              currentStock: medicine.stockQuantity,
+              requestedQuantity: totalQuantity,
+            },
+          },
+        );
+      }
+
+      // Update quantity if item exists, or create a new entry if it doesn't
+      if (existingCartItem) {
+        await tx.cartItem.update({
+          where: {
+            id: existingCartItem.id,
+          },
+          data: {
+            quantity: totalQuantity,
+          },
+        });
+      } else {
+        await tx.cartItem.create({
+          data: {
+            userId,
+            medicineId,
+            quantity,
+          },
+        });
+      }
+    }
+
+    return null;
+  });
+};
+
 const updateCartItemQuantity = async (
   userId: string,
   cartItemId: string,
@@ -243,4 +317,5 @@ export const CartService = {
   updateCartItemQuantity,
   removeCartItem,
   clearCart,
+  mergeGuestCart,
 };

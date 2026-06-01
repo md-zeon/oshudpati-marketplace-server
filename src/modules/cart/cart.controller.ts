@@ -55,6 +55,26 @@ const getCartSummary = async (
   }
 };
 
+const mergeGuestCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id as string;
+    const { items } = req.body;
+    const mergedCart = await CartService.mergeGuestCart(userId, items);
+
+    res.json({
+      success: true,
+      message: "Guest cart merged successfully",
+      data: mergedCart,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateCartItemQuantity = async (
   req: Request,
   res: Response,
@@ -123,4 +143,5 @@ export const CartController = {
   updateCartItemQuantity,
   removeCartItem,
   clearCart,
+  mergeGuestCart,
 };
