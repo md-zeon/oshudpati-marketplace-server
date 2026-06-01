@@ -9,6 +9,9 @@ const router: Router = Router();
 // Get all medicines
 router.get("/", MedicineController.getAllMedicines);
 
+// get all medicine manufacturers
+router.get("/manufacturers", MedicineController.getAllManufacturers);
+
 // Get a single medicine by ID
 router.get(
   "/:id",

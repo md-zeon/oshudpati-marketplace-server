@@ -31,7 +31,8 @@ const getAllMedicines = async (
   next: NextFunction,
 ) => {
   try {
-    const { search, isFeatured } = req.query;
+    const { search, isFeatured, category, manufacturer, minPrice, maxPrice } =
+      req.query;
 
     const queryParams = {
       search: typeof search === "string" ? search : undefined,
@@ -39,6 +40,10 @@ const getAllMedicines = async (
         typeof isFeatured === "string"
           ? isFeatured.toLowerCase() === "true"
           : undefined,
+      category: typeof category === "string" ? category : undefined,
+      manufacturer: typeof manufacturer === "string" ? manufacturer : undefined,
+      minPrice: typeof minPrice === "string" ? Number(minPrice) : 0,
+      maxPrice: typeof maxPrice === "string" ? Number(maxPrice) : Infinity,
     };
 
     const paginationParams = parsePaginationParams(req.query);
@@ -55,6 +60,26 @@ const getAllMedicines = async (
           : "No medicines found",
       data: medicines,
       meta,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllManufacturers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const manufacturers = await MedicineService.getAllManufacturers();
+    res.status(200).json({
+      success: true,
+      message:
+        manufacturers.length > 0
+          ? "Manufacturers retrieved successfully"
+          : "No manufacturers found",
+      data: manufacturers,
     });
   } catch (error) {
     next(error);
@@ -150,6 +175,7 @@ const deleteMedicineSoft = async (
 export const MedicineController = {
   createMedicine,
   getAllMedicines,
+  getAllManufacturers,
   getMedicineById,
   getMedicineBySlug,
   updateMedicine,

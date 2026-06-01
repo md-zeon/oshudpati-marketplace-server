@@ -53,6 +53,10 @@ const getAllMedicines = async (
   query: {
     search: string | undefined;
     isFeatured: boolean | undefined;
+    category: string | undefined;
+    manufacturer: string | undefined;
+    minPrice: number;
+    maxPrice: number;
   },
   metadata: {
     page: number;
@@ -62,10 +66,49 @@ const getAllMedicines = async (
     sortOrder: string;
   },
 ) => {
-  const { search, isFeatured } = query;
-  const { page, limit, skip, sortBy, sortOrder } = metadata;
+  const { search, isFeatured, category, manufacturer, minPrice, maxPrice } =
+    query;
+  const {
+    page,
+    limit,
+    skip,
+    sortBy: sortByMeta,
+    sortOrder: sortOrderMeta,
+  } = metadata;
 
-  const andConditions: MedicineWhereInput[] = [{ isActive: true }];
+  let sortBy = "createdAt";
+  let sortOrder = sortOrderMeta || "desc";
+
+  if (sortByMeta === "latest") {
+    sortBy = "createdAt";
+  } else if (sortByMeta === "price-asc") {
+    sortBy = "price";
+    sortOrder = "asc";
+  } else if (sortByMeta === "price-desc") {
+    sortBy = "price";
+    sortOrder = "desc";
+  } else if (sortByMeta == "popular") {
+    sortBy = "averageRating";
+    sortOrder = "desc";
+  }
+
+  const priceFilter: { gte?: number; lte?: number } = {};
+
+  if (Number.isFinite(minPrice)) {
+    priceFilter.gte = minPrice;
+  }
+
+  if (Number.isFinite(maxPrice)) {
+    priceFilter.lte = maxPrice;
+  }
+
+  const andConditions: MedicineWhereInput[] = [
+    {
+      isActive: true,
+      ...(Object.keys(priceFilter).length > 0 ? { price: priceFilter } : {}),
+    },
+  ];
+
   if (search) {
     andConditions.push({
       OR: [
@@ -78,6 +121,16 @@ const getAllMedicines = async (
 
   if (typeof isFeatured === "boolean") {
     andConditions.push({ isFeatured });
+  }
+
+  if (category) {
+    andConditions.push({ category: { slug: category } });
+  }
+
+  if (manufacturer) {
+    andConditions.push({
+      manufacturerName: { contains: manufacturer, mode: "insensitive" },
+    });
   }
 
   const medicines = await prisma.medicine.findMany({
@@ -109,6 +162,18 @@ const getAllMedicines = async (
   };
 
   return { medicines, meta };
+};
+
+const getAllManufacturers = async () => {
+  const manufacturers = await prisma.medicine.findMany({
+    where: { isActive: true },
+    select: {
+      manufacturerName: true,
+    },
+    distinct: ["manufacturerName"],
+  });
+
+  return manufacturers;
 };
 
 const getMedicineById = async (id: string) => {
@@ -254,6 +319,7 @@ const deleteMedicine = async (medicineId: string) => {
 export const MedicineService = {
   createMedicine,
   getAllMedicines,
+  getAllManufacturers,
   getMedicineById,
   getMedicineBySlug,
   updateMedicine,
