@@ -56,6 +56,28 @@ const getOrderById = async (
   }
 };
 
+const getOrderByOrderNumber = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const orderNumber = req.params.orderNumber;
+    const order = await OrderService.getOrderByOrderNumber(
+      orderNumber as string,
+      req.user,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Order details fetched successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateOrderStatus = async (
   req: Request,
   res: Response,
@@ -86,5 +108,6 @@ export const orderController = {
   createOrder,
   getMyOrders,
   getOrderById,
+  getOrderByOrderNumber,
   updateOrderStatus,
 };

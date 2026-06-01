@@ -25,6 +25,12 @@ router.get(
   orderController.getOrderById,
 );
 
+router.get(
+  "/order-number/:orderNumber",
+  auth(UserRole.CUSTOMER, UserRole.SELLER),
+  orderController.getOrderByOrderNumber,
+);
+
 // update order status (for seller)
 router.patch(
   "/:orderId/status",
