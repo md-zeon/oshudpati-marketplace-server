@@ -41,6 +41,27 @@ const getMyAddresses = async (
   }
 };
 
+const getAddressById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id as string;
+    const addressId = req.params.id as string;
+
+    const result = await AddressService.getAddressById(userId, addressId);
+
+    res.json({
+      success: true,
+      message: "Address details fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateAddress = async (
   req: Request,
   res: Response,
@@ -111,6 +132,7 @@ const setDefaultAddress = async (
 export const AddressController = {
   createAddress,
   getMyAddresses,
+  getAddressById,
   updateAddress,
   deleteAddress,
   setDefaultAddress,

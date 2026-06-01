@@ -36,6 +36,12 @@ const getMyAddresses = async (userId: string) => {
   });
 };
 
+const getAddressById = async (userId: string, addressId: string) => {
+  return prisma.address.findFirstOrThrow({
+    where: { id: addressId, userId },
+  });
+};
+
 const updateAddress = async (
   userId: string,
   addressId: string,
@@ -119,6 +125,7 @@ const setDefaultAddress = async (userId: string, addressId: string) => {
 export const AddressService = {
   createAddress,
   getMyAddresses,
+  getAddressById,
   updateAddress,
   deleteAddress,
   setDefaultAddress,

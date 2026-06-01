@@ -17,6 +17,14 @@ router.post(
 // get my addresses
 router.get("/", auth(UserRole.CUSTOMER), AddressController.getMyAddresses);
 
+// get address details
+router.get(
+  "/:id",
+  auth(UserRole.CUSTOMER),
+  validateRequest(AddressValidation.addressIdZodSchema),
+  AddressController.getAddressById,
+);
+
 // update address
 router.patch(
   "/:id",
