@@ -12,6 +12,7 @@ import { CartRoutes } from "./modules/cart/cart.routes";
 import { AddressRoutes } from "./modules/address/address.routes";
 import { notFoundHandler } from "./middlewares/notFound";
 import { ReviewRoutes } from "./modules/review/review.routes";
+import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 const app: Application = express();
 
 app.use(
@@ -46,6 +47,9 @@ app.use("/api/addresses", AddressRoutes);
 
 // Review routes
 app.use("/api/reviews", ReviewRoutes);
+
+// Dashboard routes
+app.use("/api/dashboard", DashboardRoutes);
 
 // Test route
 app.get("/", (req, res) => {
