@@ -49,6 +49,7 @@ model User {
   vendorOrders VendorOrder[] // For sellers: orders they need to fulfill
   reviews      Review[] // For customers: reviews they have written
   shop         Shop? // For sellers: their shop (if they have one)
+  wishlists    Wishlist[] // For customers: medicines they have wishlisted
 
   @@unique([email])
   @@map("user")
@@ -174,6 +175,7 @@ model Medicine {
   orderItems OrderItem[]
   reviews    Review[]
   cartItems  CartItem[]
+  wishlists  Wishlist[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -307,6 +309,24 @@ model OrderItem {
   createdAt             DateTime    @default(now())
 
   @@map("order_item")
+}
+
+// ==========================================
+// WISHLIST
+// ==========================================
+
+model Wishlist {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, medicineId])
+  @@index([userId])
+  @@index([medicineId])
+  @@map("wishlist")
 }
 
 // ==========================================

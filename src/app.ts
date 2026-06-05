@@ -12,6 +12,7 @@ import { CartRoutes } from "./modules/cart/cart.routes";
 import { AddressRoutes } from "./modules/address/address.routes";
 import { notFoundHandler } from "./middlewares/notFound";
 import { ReviewRoutes } from "./modules/review/review.routes";
+import { WishlistRoutes } from "./modules/wishlist/wishlist.routes";
 import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { ShopRoutes } from "./modules/shop/shop.routes";
 const app: Application = express();
@@ -48,6 +49,9 @@ app.use("/api/addresses", AddressRoutes);
 
 // Review routes
 app.use("/api/reviews", ReviewRoutes);
+
+// Wishlist routes
+app.use("/api/wishlist", WishlistRoutes);
 
 // Shop routes
 app.use("/api/shops", ShopRoutes);
