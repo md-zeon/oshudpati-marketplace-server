@@ -21,6 +21,46 @@ const getCustomerDashboard = async (
   }
 };
 
+const getSellerDashboard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const sellerId = req.user?.id as string;
+
+    const dashboard = await DashboardService.getSellerDashboard(sellerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Seller dashboard data retrieved successfully",
+      data: dashboard,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAdminDashboard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const dashboard = await DashboardService.getAdminDashboard();
+
+    res.status(200).json({
+      success: true,
+      message: "Admin dashboard data retrieved successfully",
+      data: dashboard,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const DashboardController = {
   getCustomerDashboard,
+  getSellerDashboard,
+  getAdminDashboard,
 };

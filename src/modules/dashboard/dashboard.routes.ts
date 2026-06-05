@@ -11,4 +11,18 @@ router.get(
   DashboardController.getCustomerDashboard,
 );
 
+// Get seller dashboard data
+router.get(
+  "/seller",
+  auth(UserRole.SELLER),
+  DashboardController.getSellerDashboard,
+);
+
+// Get admin dashboard data
+router.get(
+  "/admin",
+  auth(UserRole.ADMIN),
+  DashboardController.getAdminDashboard,
+);
+
 export const DashboardRoutes = router;

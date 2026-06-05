@@ -31,19 +31,16 @@ const getCustomerDashboard = async (customerId: string) => {
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-
     prisma.address.findMany({
       where: { userId: customerId },
       orderBy: { isDefault: "desc" },
     }),
-
     prisma.cartItem.aggregate({
       where: { userId: customerId },
       _sum: { quantity: true },
     }),
   ]);
 
-  // Calculate stats
   const totalOrders = orders.length;
   const activeOrders = orders.filter((o) =>
     o.vendorOrders.some(
@@ -69,7 +66,6 @@ const getCustomerDashboard = async (customerId: string) => {
     return sum + orderSavings;
   }, 0);
 
-  // Get recent unique medicines for quick reorder
   const recentMedicineIds = new Set<string>();
   const quickReorder: {
     id: string;
@@ -104,7 +100,6 @@ const getCustomerDashboard = async (customerId: string) => {
     }
   }
 
-  // Transform orders for the client
   const recentOrders = orders.slice(0, 5).map((order) => ({
     id: order.id,
     orderNumber: order.orderNumber,
@@ -161,6 +156,127 @@ const getCustomerDashboard = async (customerId: string) => {
   };
 };
 
+const getSellerDashboard = async (sellerId: string) => {
+  const [shop, medicines, vendorOrders] = await Promise.all([
+    prisma.shop.findUnique({ where: { sellerId } }),
+    prisma.medicine.findMany({
+      where: { sellerId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        discountPrice: true,
+        stockQuantity: true,
+        totalSalesCount: true,
+        isActive: true,
+        _count: { select: { orderItems: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.vendorOrder.findMany({
+      where: { sellerId },
+      include: {
+        order: { select: { orderNumber: true, createdAt: true } },
+        orderItems: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+  ]);
+
+  const totalMedicines = medicines.length;
+  const totalOrders = vendorOrders.length;
+  const pendingOrders = vendorOrders.filter(
+    (v) => v.orderStatus !== "DELIVERED" && v.orderStatus !== "CANCELLED",
+  ).length;
+  const totalRevenue = vendorOrders
+    .filter((v) => v.orderStatus === "DELIVERED")
+    .reduce((sum, v) => sum + Number(v.vendorSubtotal), 0);
+
+  const recentOrders = vendorOrders.slice(0, 5).map((vo) => ({
+    id: vo.id,
+    orderId: vo.orderId,
+    orderNumber: vo.order.orderNumber,
+    orderStatus: vo.orderStatus,
+    vendorSubtotal: Number(vo.vendorSubtotal),
+    itemCount: vo.orderItems.length,
+    createdAt: vo.createdAt,
+  }));
+
+  return {
+    shop: shop
+      ? {
+          id: shop.id,
+          name: shop.name,
+          slug: shop.slug,
+          logo: shop.logo,
+          description: shop.description,
+        }
+      : null,
+    stats: {
+      totalMedicines,
+      totalOrders,
+      pendingOrders,
+      totalRevenue,
+    },
+    recentOrders,
+  };
+};
+
+const getAdminDashboard = async () => {
+  const [
+    totalUsers,
+    totalSellers,
+    totalMedicines,
+    totalOrders,
+    totalRevenue,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { role: "SELLER" } }),
+    prisma.medicine.count({ where: { isActive: true } }),
+    prisma.order.count(),
+    prisma.vendorOrder.aggregate({
+      where: { orderStatus: "DELIVERED" },
+      _sum: { vendorSubtotal: true },
+    }),
+    prisma.order.findMany({
+      take: 10,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        orderNumber: true,
+        totalAmount: true,
+        paymentStatus: true,
+        placedAt: true,
+        customer: { select: { name: true, email: true } },
+      },
+    }),
+  ]);
+
+  return {
+    stats: {
+      totalUsers,
+      totalSellers,
+      totalMedicines,
+      totalOrders,
+      totalRevenue: Number(totalRevenue._sum.vendorSubtotal || 0),
+    },
+    recentOrders: recentOrders.map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      totalAmount: Number(o.totalAmount),
+      paymentStatus: o.paymentStatus,
+      placedAt: o.placedAt,
+      customerName: o.customer.name,
+      customerEmail: o.customer.email,
+    })),
+  };
+};
+
 export const DashboardService = {
   getCustomerDashboard,
+  getSellerDashboard,
+  getAdminDashboard,
 };
