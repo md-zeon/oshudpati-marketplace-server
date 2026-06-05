@@ -49,6 +49,20 @@ const createMedicine = async (
   });
 };
 
+const getMyMedicines = async (sellerId: string) => {
+  return prisma.medicine.findMany({
+    where: { sellerId },
+    include: {
+      category: true,
+      images: true,
+      _count: {
+        select: { orderItems: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 const getAllMedicines = async (
   query: {
     search: string | undefined;
@@ -258,7 +272,6 @@ const updateMedicine = async (
 
       // Upsert remaining/new images
       for (const img of images) {
-        // If img has an ID, update it; otherwise, create a new one
         if (img.id) {
           await tx.medicineImage.update({
             where: { id: img.id },
@@ -318,6 +331,7 @@ const deleteMedicine = async (medicineId: string) => {
 
 export const MedicineService = {
   createMedicine,
+  getMyMedicines,
   getAllMedicines,
   getAllManufacturers,
   getMedicineById,

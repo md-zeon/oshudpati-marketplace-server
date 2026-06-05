@@ -172,12 +172,36 @@ const deleteMedicineSoft = async (
   }
 };
 
+const getMyMedicines = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const sellerId = req.user?.id as string;
+
+    const medicines = await MedicineService.getMyMedicines(sellerId);
+
+    res.status(200).json({
+      success: true,
+      message:
+        medicines.length > 0
+          ? "Medicines retrieved successfully"
+          : "No medicines found",
+      data: medicines,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const MedicineController = {
   createMedicine,
   getAllMedicines,
   getAllManufacturers,
   getMedicineById,
   getMedicineBySlug,
+  getMyMedicines,
   updateMedicine,
   deleteMedicineSoft,
 };

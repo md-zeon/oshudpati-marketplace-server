@@ -9,6 +9,13 @@ const router: Router = Router();
 // Get all medicines
 router.get("/", MedicineController.getAllMedicines);
 
+// Get my medicines (seller)
+router.get(
+  "/my-medicines",
+  auth(UserRole.SELLER),
+  MedicineController.getMyMedicines,
+);
+
 // get all medicine manufacturers
 router.get("/manufacturers", MedicineController.getAllManufacturers);
 
