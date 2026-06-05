@@ -13,6 +13,7 @@ import { AddressRoutes } from "./modules/address/address.routes";
 import { notFoundHandler } from "./middlewares/notFound";
 import { ReviewRoutes } from "./modules/review/review.routes";
 import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
+import { ShopRoutes } from "./modules/shop/shop.routes";
 const app: Application = express();
 
 app.use(
@@ -48,10 +49,13 @@ app.use("/api/addresses", AddressRoutes);
 // Review routes
 app.use("/api/reviews", ReviewRoutes);
 
+// Shop routes
+app.use("/api/shops", ShopRoutes);
+
 // Dashboard routes
 app.use("/api/dashboard", DashboardRoutes);
 
-// Test route
+// Root route
 app.get("/", (req, res) => {
   res.send("Oshudpati Marketplace API is running!");
 });
