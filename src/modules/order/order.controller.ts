@@ -104,9 +104,30 @@ const updateOrderStatus = async (
   }
 };
 
+const getSellerOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const sellerId = req.user?.id as string;
+
+    const orders = await OrderService.getSellerVendorOrders(sellerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully",
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const orderController = {
   createOrder,
   getMyOrders,
+  getSellerOrders,
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,

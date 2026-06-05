@@ -14,8 +14,15 @@ router.post(
   orderController.createOrder,
 );
 
-// get my orders
+// get my orders (customer)
 router.get("/my-orders", auth(UserRole.CUSTOMER), orderController.getMyOrders);
+
+// get seller orders
+router.get(
+  "/seller-orders",
+  auth(UserRole.SELLER),
+  orderController.getSellerOrders,
+);
 
 // get order details (for customer and seller)
 router.get(

@@ -236,6 +236,47 @@ const getMyOrders = async (customerId: string) => {
   });
 };
 
+const getSellerVendorOrders = async (sellerId: string) => {
+  return prisma.vendorOrder.findMany({
+    where: { sellerId },
+    include: {
+      order: {
+        select: {
+          id: true,
+          orderNumber: true,
+          placedAt: true,
+          shippingAddressSnapshot: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+        },
+      },
+      orderItems: {
+        include: {
+          medicine: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              images: {
+                take: 1,
+                where: { isPrimary: true },
+                select: { imageUrl: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 const getOrderById = async (orderId: string, user: any) => {
   const order = await prisma.order.findUniqueOrThrow({
     where: { id: orderId },
@@ -374,6 +415,7 @@ const updateOrderStatus = async (
 export const OrderService = {
   createOrder,
   getMyOrders,
+  getSellerVendorOrders,
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,
