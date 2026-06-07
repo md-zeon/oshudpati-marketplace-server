@@ -412,11 +412,77 @@ const updateOrderStatus = async (
   });
 };
 
+const cancelMyOrder = async (orderId: string, customerId: string) => {
+  const order = await prisma.order.findFirstOrThrow({
+    where: { id: orderId, customerId },
+    include: {
+      vendorOrders: true,
+    },
+  });
+
+  // Only allow cancelling if any vendor order is still PLACED
+  const allCancelledOrPlaced = order.vendorOrders.every(
+    (vo) => vo.orderStatus === OrderStatus.PLACED,
+  );
+
+  if (!allCancelledOrPlaced) {
+    throw new Error(
+      "Order can only be cancelled if all vendor orders are still in PLACED status",
+      {
+        cause: {
+          name: "InvalidCancellationError",
+          message: "Order has already been processed and cannot be cancelled",
+          orderId,
+        },
+      },
+    );
+  }
+
+  await prisma.vendorOrder.updateMany({
+    where: { orderId },
+    data: { orderStatus: "CANCELLED" },
+  });
+
+  return prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    include: {
+      vendorOrders: {
+        include: {
+          orderItems: true,
+          seller: true,
+        },
+      },
+    },
+  });
+};
+
+const getAllOrders = async () => {
+  return prisma.order.findMany({
+    include: {
+      customer: {
+        select: { id: true, name: true, email: true },
+      },
+      vendorOrders: {
+        include: {
+          orderItems: true,
+          seller: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+};
+
 export const OrderService = {
   createOrder,
   getMyOrders,
   getSellerVendorOrders,
+  getAllOrders,
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,
+  cancelMyOrder,
 };

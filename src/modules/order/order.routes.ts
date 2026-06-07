@@ -24,6 +24,9 @@ router.get(
   orderController.getSellerOrders,
 );
 
+// get all orders (admin)
+router.get("/all-orders", auth(UserRole.ADMIN), orderController.getAllOrders);
+
 // get order details (for customer and seller)
 router.get(
   "/:orderId",

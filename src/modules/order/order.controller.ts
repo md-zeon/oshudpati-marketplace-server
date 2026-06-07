@@ -124,11 +124,52 @@ const getSellerOrders = async (
   }
 };
 
+const cancelMyOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const customerId = req.user?.id as string;
+    const orderId = req.params.orderId as string;
+
+    const order = await OrderService.cancelMyOrder(orderId, customerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const orders = await OrderService.getAllOrders();
+
+    res.status(200).json({
+      success: true,
+      message: "All orders fetched successfully",
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const orderController = {
   createOrder,
   getMyOrders,
   getSellerOrders,
+  getAllOrders,
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,
+  cancelMyOrder,
 };
