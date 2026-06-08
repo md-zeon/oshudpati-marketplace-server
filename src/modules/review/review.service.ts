@@ -133,9 +133,36 @@ const deleteReview = async (customerId: string, reviewId: string) => {
   });
 };
 
+const getAllReviews = async () => {
+  return prisma.review.findMany({
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      medicine: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 100,
+  });
+};
+
 export const ReviewService = {
   createReview,
   getMedicineReviews,
   updateReview,
   deleteReview,
+  getAllReviews,
 };

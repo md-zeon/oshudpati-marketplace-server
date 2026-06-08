@@ -124,20 +124,23 @@ const getSellerOrders = async (
   }
 };
 
-const cancelMyOrder = async (
+const cancelVendorOrder = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const customerId = req.user?.id as string;
-    const orderId = req.params.orderId as string;
+    const vendorOrderId = req.params.vendorOrderId as string;
 
-    const order = await OrderService.cancelMyOrder(orderId, customerId);
+    const order = await OrderService.cancelVendorOrder(
+      vendorOrderId,
+      customerId,
+    );
 
     res.status(200).json({
       success: true,
-      message: "Order cancelled successfully",
+      message: "Vendor order cancelled successfully",
       data: order,
     });
   } catch (error) {
@@ -171,5 +174,5 @@ export const orderController = {
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,
-  cancelMyOrder,
+  cancelVendorOrder,
 };

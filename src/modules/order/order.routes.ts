@@ -41,6 +41,13 @@ router.get(
   orderController.getOrderByOrderNumber,
 );
 
+// cancel a vendor order (for customer)
+router.patch(
+  "/vendor-order/:vendorOrderId/cancel",
+  auth(UserRole.CUSTOMER),
+  orderController.cancelVendorOrder,
+);
+
 // update order status (for seller)
 router.patch(
   "/:orderId/status",

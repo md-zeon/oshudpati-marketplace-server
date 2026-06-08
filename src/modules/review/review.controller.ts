@@ -85,9 +85,28 @@ const deleteReview = async (
   }
 };
 
+const getAllReviews = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await ReviewService.getAllReviews();
+
+    res.json({
+      success: true,
+      message: "All reviews fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ReviewController = {
   createReview,
   getMedicineReviews,
   updateReview,
   deleteReview,
+  getAllReviews,
 };

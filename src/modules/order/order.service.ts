@@ -412,45 +412,51 @@ const updateOrderStatus = async (
   });
 };
 
-const cancelMyOrder = async (orderId: string, customerId: string) => {
-  const order = await prisma.order.findFirstOrThrow({
-    where: { id: orderId, customerId },
+const cancelVendorOrder = async (vendorOrderId: string, customerId: string) => {
+  // verify the vendor order belongs to the customer's order
+  const vendorOrder = await prisma.vendorOrder.findFirstOrThrow({
+    where: { id: vendorOrderId },
     include: {
-      vendorOrders: true,
+      order: {
+        select: { customerId: true },
+      },
     },
   });
 
-  // Only allow cancelling if any vendor order is still PLACED
-  const allCancelledOrPlaced = order.vendorOrders.every(
-    (vo) => vo.orderStatus === OrderStatus.PLACED,
-  );
+  if (vendorOrder.order.customerId !== customerId) {
+    throw new Error("You are not allowed to cancel this vendor order", {
+      cause: {
+        name: "UnauthorizedCancellationError",
+        vendorOrderId,
+      },
+    });
+  }
 
-  if (!allCancelledOrPlaced) {
+  // Only allow cancelling if still PLACED
+  if (vendorOrder.orderStatus !== OrderStatus.PLACED) {
     throw new Error(
-      "Order can only be cancelled if all vendor orders are still in PLACED status",
+      "Vendor order can only be cancelled when in PLACED status",
       {
         cause: {
           name: "InvalidCancellationError",
-          message: "Order has already been processed and cannot be cancelled",
-          orderId,
+          vendorOrderId,
+          currentStatus: vendorOrder.orderStatus,
         },
       },
     );
   }
 
-  await prisma.vendorOrder.updateMany({
-    where: { orderId },
+  await prisma.vendorOrder.update({
+    where: { id: vendorOrderId },
     data: { orderStatus: "CANCELLED" },
   });
 
-  return prisma.order.findUniqueOrThrow({
-    where: { id: orderId },
+  return prisma.vendorOrder.findUniqueOrThrow({
+    where: { id: vendorOrderId },
     include: {
-      vendorOrders: {
-        include: {
-          orderItems: true,
-          seller: true,
-        },
+      orderItems: true,
+      seller: {
+        select: { id: true, name: true },
       },
     },
   });
@@ -484,5 +490,5 @@ export const OrderService = {
   getOrderById,
   getOrderByOrderNumber,
   updateOrderStatus,
-  cancelMyOrder,
+  cancelVendorOrder,
 };
