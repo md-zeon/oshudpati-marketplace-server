@@ -5,8 +5,7 @@ const addToCartZodSchema = z.object({
     medicineId: z.string().uuid("Invalid medicine ID format"),
     quantity: z
       .number("Quantity must be a number")
-      .int("Quantity must be an integer")
-      .positive("Quantity must be greater than 0"),
+      .int("Quantity must be an integer"),
   }),
 });
 
