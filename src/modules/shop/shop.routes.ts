@@ -6,15 +6,15 @@ import { ShopValidation } from "./shop.validation";
 
 const router: Router = Router();
 
+// Get my shop (seller)
+router.get("/my-shop", auth(UserRole.SELLER), ShopController.getMyShop);
+
 // Get shop by slug (public)
 router.get(
   "/:slug",
   validateRequest(ShopValidation.getShopBySlugZodSchema),
   ShopController.getShopBySlug,
 );
-
-// Get my shop (seller)
-router.get("/my-shop", auth(UserRole.SELLER), ShopController.getMyShop);
 
 // Create shop (seller)
 router.post(
