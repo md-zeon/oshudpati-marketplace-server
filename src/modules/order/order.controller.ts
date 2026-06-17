@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { OrderService } from "./order.service";
 import { OrderStatus } from "../../../generated/prisma/enums";
+import { parsePaginationParams } from "../../lib/utils";
 
 const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -111,13 +112,18 @@ const getSellerOrders = async (
 ) => {
   try {
     const sellerId = req.user?.id as string;
+    const paginationParams = parsePaginationParams(req.query);
 
-    const orders = await OrderService.getSellerVendorOrders(sellerId);
+    const result = await OrderService.getSellerVendorOrders(
+      sellerId,
+      paginationParams,
+    );
 
     res.status(200).json({
       success: true,
       message: "Orders fetched successfully",
-      data: orders,
+      data: result.orders,
+      meta: result.meta,
     });
   } catch (error) {
     next(error);

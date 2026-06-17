@@ -49,8 +49,19 @@ const createMedicine = async (
   });
 };
 
-const getMyMedicines = async (sellerId: string) => {
-  return prisma.medicine.findMany({
+const getMyMedicines = async (
+  sellerId: string,
+  metadata: {
+    page: number;
+    limit: number;
+    skip: number;
+    sortBy: string;
+    sortOrder: string;
+  },
+) => {
+  const { page, limit, skip } = metadata;
+
+  const medicines = await prisma.medicine.findMany({
     where: { sellerId },
     include: {
       category: true,
@@ -60,7 +71,24 @@ const getMyMedicines = async (sellerId: string) => {
       },
     },
     orderBy: { createdAt: "desc" },
+    take: limit,
+    skip,
   });
+
+  const total = await prisma.medicine.count({
+    where: { sellerId },
+  });
+
+  const meta = {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    hasNext: page < Math.ceil(total / limit),
+    hasPrevious: page > 1,
+  };
+
+  return { medicines, meta };
 };
 
 const getAllMedicines = async (

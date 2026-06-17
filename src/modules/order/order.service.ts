@@ -236,8 +236,19 @@ const getMyOrders = async (customerId: string) => {
   });
 };
 
-const getSellerVendorOrders = async (sellerId: string) => {
-  return prisma.vendorOrder.findMany({
+const getSellerVendorOrders = async (
+  sellerId: string,
+  metadata: {
+    page: number;
+    limit: number;
+    skip: number;
+    sortBy: string;
+    sortOrder: string;
+  },
+) => {
+  const { page, limit, skip } = metadata;
+
+  const orders = await prisma.vendorOrder.findMany({
     where: { sellerId },
     include: {
       order: {
@@ -274,7 +285,24 @@ const getSellerVendorOrders = async (sellerId: string) => {
       },
     },
     orderBy: { createdAt: "desc" },
+    take: limit,
+    skip,
   });
+
+  const total = await prisma.vendorOrder.count({
+    where: { sellerId },
+  });
+
+  const meta = {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    hasNext: page < Math.ceil(total / limit),
+    hasPrevious: page > 1,
+  };
+
+  return { orders, meta };
 };
 
 const getOrderById = async (orderId: string, user: any) => {

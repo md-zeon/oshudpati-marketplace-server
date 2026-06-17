@@ -179,16 +179,21 @@ const getMyMedicines = async (
 ) => {
   try {
     const sellerId = req.user?.id as string;
+    const paginationParams = parsePaginationParams(req.query);
 
-    const medicines = await MedicineService.getMyMedicines(sellerId);
+    const result = await MedicineService.getMyMedicines(
+      sellerId,
+      paginationParams,
+    );
 
     res.status(200).json({
       success: true,
       message:
-        medicines.length > 0
+        result.medicines.length > 0
           ? "Medicines retrieved successfully"
           : "No medicines found",
-      data: medicines,
+      data: result.medicines,
+      meta: result.meta,
     });
   } catch (error) {
     next(error);
