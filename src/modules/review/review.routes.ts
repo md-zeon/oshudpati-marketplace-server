@@ -31,4 +31,14 @@ router.delete(
   ReviewController.deleteReview,
 );
 
+// Admin: Toggle review visibility
+router.patch(
+  "/:id/status",
+  auth(UserRole.ADMIN),
+  ReviewController.toggleReviewStatus,
+);
+
+// Admin: Add/update reply to review
+router.patch("/:id/reply", auth(UserRole.ADMIN), ReviewController.addReply);
+
 export const ReviewRoutes = router;

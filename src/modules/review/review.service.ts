@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma";
 
 const recalcMedicineRating = async (tx: any, medicineId: string) => {
   const stats = await tx.review.aggregate({
-    where: { medicineId },
+    where: { medicineId, isActive: true },
     _avg: { rating: true },
     _count: { rating: true },
   });
@@ -45,7 +45,6 @@ const createReview = async (
       });
     }
 
-    // prevent duplicate review
     const existing = await tx.review.findUnique({
       where: {
         customerId_medicineId: {
@@ -79,7 +78,7 @@ const createReview = async (
 
 const getMedicineReviews = async (medicineId: string) => {
   return prisma.review.findMany({
-    where: { medicineId },
+    where: { medicineId, isActive: true },
     include: {
       customer: {
         select: {
@@ -126,7 +125,6 @@ const deleteReview = async (customerId: string, reviewId: string) => {
       where: { id: review.id },
     });
 
-    // recalculate rating and review count and update medicine stats
     await recalcMedicineRating(tx, review.medicineId);
 
     return true;
@@ -159,10 +157,39 @@ const getAllReviews = async () => {
   });
 };
 
+const toggleReviewStatus = async (reviewId: string, isActive: boolean) => {
+  return prisma.$transaction(async (tx) => {
+    const review = await tx.review.findUniqueOrThrow({
+      where: { id: reviewId },
+    });
+
+    const updated = await tx.review.update({
+      where: { id: reviewId },
+      data: { isActive },
+    });
+
+    await recalcMedicineRating(tx, review.medicineId);
+
+    return updated;
+  });
+};
+
+const addReviewReply = async (reviewId: string, reply: string) => {
+  return prisma.review.update({
+    where: { id: reviewId },
+    data: {
+      reply,
+      repliedAt: new Date(),
+    },
+  });
+};
+
 export const ReviewService = {
   createReview,
   getMedicineReviews,
   updateReview,
   deleteReview,
   getAllReviews,
+  toggleReviewStatus,
+  addReviewReply,
 };

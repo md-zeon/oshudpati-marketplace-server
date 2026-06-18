@@ -334,15 +334,18 @@ model Wishlist {
 // ==========================================
 
 model Review {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   customerId String
-  customer   User     @relation(fields: [customerId], references: [id])
+  customer   User      @relation(fields: [customerId], references: [id])
   medicineId String
-  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  medicine   Medicine  @relation(fields: [medicineId], references: [id], onDelete: Cascade)
   rating     Int
   comment    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isActive   Boolean   @default(true)
+  reply      String?
+  repliedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@unique([customerId, medicineId])
   @@map("review")

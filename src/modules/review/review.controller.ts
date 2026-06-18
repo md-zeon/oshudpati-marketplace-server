@@ -8,7 +8,6 @@ const createReview = async (
 ) => {
   try {
     const customerId = req.user?.id as string;
-
     const result = await ReviewService.createReview(customerId, req.body);
 
     res.status(201).json({
@@ -48,7 +47,6 @@ const updateReview = async (
 ) => {
   try {
     const customerId = req.user?.id as string;
-
     const result = await ReviewService.updateReview(
       customerId,
       req.params.id as string,
@@ -72,7 +70,6 @@ const deleteReview = async (
 ) => {
   try {
     const customerId = req.user?.id as string;
-
     await ReviewService.deleteReview(customerId, req.params.id as string);
 
     res.json({
@@ -103,10 +100,53 @@ const getAllReviews = async (
   }
 };
 
+const toggleReviewStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const result = await ReviewService.toggleReviewStatus(
+      id as string,
+      isActive,
+    );
+
+    res.json({
+      success: true,
+      message: `Review ${isActive ? "activated" : "deactivated"} successfully`,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const addReply = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { reply } = req.body;
+
+    const result = await ReviewService.addReviewReply(id as string, reply);
+
+    res.json({
+      success: true,
+      message: "Reply added successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ReviewController = {
   createReview,
   getMedicineReviews,
   updateReview,
   deleteReview,
   getAllReviews,
+  toggleReviewStatus,
+  addReply,
 };
