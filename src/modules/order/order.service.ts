@@ -1,4 +1,8 @@
-import { OrderStatus, Prisma } from "../../../generated/prisma/client";
+import {
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+} from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 import { calculateDeliveryFee } from "../../lib/utils";
 
@@ -434,9 +438,26 @@ const updateOrderStatus = async (
   }
 
   // update status
-  return prisma.vendorOrder.update({
-    where: { id: vendorOrder.id },
-    data: { orderStatus: newStatus },
+  await prisma.$transaction(async (tx) => {
+    await tx.vendorOrder.update({
+      where: { id: vendorOrder.id },
+      data: { orderStatus: newStatus },
+    });
+    // update payment status if order is delivered or cancelled
+    if (
+      newStatus === OrderStatus.DELIVERED ||
+      newStatus === OrderStatus.CANCELLED
+    ) {
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus:
+            newStatus === OrderStatus.DELIVERED
+              ? PaymentStatus.PAID
+              : PaymentStatus.REFUNDED,
+        },
+      });
+    }
   });
 };
 
