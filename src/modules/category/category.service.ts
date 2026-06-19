@@ -110,6 +110,33 @@ const deleteCategorySoft = async (id: string) => {
   return res;
 };
 
+const getInactiveCategories = async () => {
+  const categories = await prisma.category.findMany({
+    where: {
+      isActive: false,
+    },
+    select: categorySelect,
+    orderBy: {
+      name: "asc",
+    },
+  });
+  return categories;
+};
+
+const recoverCategory = async (id: string) => {
+  await prisma.category.findFirstOrThrow({
+    where: { id, isActive: false },
+  });
+
+  const res = await prisma.category.update({
+    where: { id },
+    data: { isActive: true },
+    select: categorySelect,
+  });
+
+  return res;
+};
+
 export const CategoryService = {
   getAllCategories,
   createCategory,
@@ -117,4 +144,6 @@ export const CategoryService = {
   getCategoryById,
   getCategoryBySlug,
   deleteCategorySoft,
+  recoverCategory,
+  getInactiveCategories,
 };

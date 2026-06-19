@@ -117,6 +117,42 @@ const deleteCategorySoft = async (
   }
 };
 
+const getInactiveCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const categories = await CategoryService.getInactiveCategories();
+    res.status(200).json({
+      success: true,
+      message: "Inactive categories retrieved successfully",
+      data: categories,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const recoverCategory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const category = await CategoryService.recoverCategory(
+      req.params.id as string,
+    );
+    res.status(200).json({
+      success: true,
+      message: "Category recovered successfully",
+      data: category,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const CategoryController = {
   getAllCategories,
   getCategoryById,
@@ -124,4 +160,6 @@ export const CategoryController = {
   updateCategory,
   getCategoryBySlug,
   deleteCategorySoft,
+  recoverCategory,
+  getInactiveCategories,
 };

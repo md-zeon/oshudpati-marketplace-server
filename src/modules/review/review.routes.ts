@@ -15,6 +15,7 @@ router.post(
 
 router.get("/medicine/:medicineId", ReviewController.getMedicineReviews);
 
+// Admin route to get all reviews
 router.get("/all", auth(UserRole.ADMIN), ReviewController.getAllReviews);
 
 router.patch(

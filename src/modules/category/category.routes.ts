@@ -9,6 +9,13 @@ const router: Router = Router();
 // Get all categories
 router.get("/", CategoryController.getAllCategories);
 
+// get inactive categories (Admin only)
+router.get(
+  "/inactive",
+  auth(UserRole.ADMIN),
+  CategoryController.getInactiveCategories,
+);
+
 // Get category by slug
 router.get(
   "/slug/:slug",
@@ -45,6 +52,14 @@ router.delete(
   auth(UserRole.ADMIN),
   validateRequest(CategoryValidation.getCategoryByIdZodSchema),
   CategoryController.deleteCategorySoft,
+);
+
+// Recover Category (Admin only)
+router.patch(
+  "/:id/recover",
+  auth(UserRole.ADMIN),
+  validateRequest(CategoryValidation.getCategoryByIdZodSchema),
+  CategoryController.recoverCategory,
 );
 
 export const CategoryRoutes: Router = router;
