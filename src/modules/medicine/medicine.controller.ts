@@ -40,8 +40,14 @@ const getAllMedicines = async (
         typeof isFeatured === "string"
           ? isFeatured.toLowerCase() === "true"
           : undefined,
-      category: typeof category === "string" ? category : undefined,
-      manufacturer: typeof manufacturer === "string" ? manufacturer : undefined,
+      category:
+        typeof category === "string" && category.length > 0
+          ? category.split(",").filter(Boolean)
+          : [],
+      manufacturer:
+        typeof manufacturer === "string" && manufacturer.length > 0
+          ? manufacturer.split(",").filter(Boolean)
+          : [],
       minPrice: typeof minPrice === "string" ? Number(minPrice) : 0,
       maxPrice: typeof maxPrice === "string" ? Number(maxPrice) : Infinity,
     };

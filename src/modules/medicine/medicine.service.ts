@@ -95,8 +95,8 @@ const getAllMedicines = async (
   query: {
     search: string | undefined;
     isFeatured: boolean | undefined;
-    category: string | undefined;
-    manufacturer: string | undefined;
+    category: string[];
+    manufacturer: string[];
     minPrice: number;
     maxPrice: number;
   },
@@ -165,14 +165,12 @@ const getAllMedicines = async (
     andConditions.push({ isFeatured });
   }
 
-  if (category) {
-    andConditions.push({ category: { slug: category } });
+  if (category.length > 0) {
+    andConditions.push({ category: { slug: { in: category } } });
   }
 
-  if (manufacturer) {
-    andConditions.push({
-      manufacturerName: { contains: manufacturer, mode: "insensitive" },
-    });
+  if (manufacturer.length > 0) {
+    andConditions.push({ manufacturerName: { in: manufacturer } });
   }
 
   const medicines = await prisma.medicine.findMany({
