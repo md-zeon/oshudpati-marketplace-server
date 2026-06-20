@@ -23,6 +23,8 @@ const allowedOrigins = [
   process.env.PROD_APP_URL, // Production frontend URL
 ].filter(Boolean); // Remove undefined values
 
+app.use(express.json());
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -56,8 +58,6 @@ app.use(
 //     credentials: true,
 //   }),
 // );
-
-app.use(express.json());
 
 // Auth routes
 app.use("/api/auth", AuthRoutes);

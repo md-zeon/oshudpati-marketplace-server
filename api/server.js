@@ -4196,6 +4196,7 @@ var allowedOrigins = [
   process.env.PROD_APP_URL
   // Production frontend URL
 ].filter(Boolean);
+app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -4215,7 +4216,6 @@ app.use(
     exposedHeaders: ["Set-Cookie"]
   })
 );
-app.use(express.json());
 app.use("/api/auth", AuthRoutes);
 app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use("/api/categories", CategoryRoutes);
