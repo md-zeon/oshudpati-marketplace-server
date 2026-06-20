@@ -17,12 +17,46 @@ import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { ShopRoutes } from "./modules/shop/shop.routes";
 const app: Application = express();
 
+// Configure CORS to allow both production and Vercel preview deployments
+const allowedOrigins = [
+  process.env.APP_URL || "http://localhost:3000",
+  process.env.PROD_APP_URL, // Production frontend URL
+].filter(Boolean); // Remove undefined values
+
 app.use(
   cors({
-    origin: process.env.APP_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowedOrigins or matches Vercel preview pattern
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/oshudpati-marketplace-client.*\.vercel\.app$/.test(
+          origin,
+        ) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin); // Any Vercel deployment
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
   }),
 );
+
+// app.use(
+//   cors({
+//     origin: process.env.APP_URL || "http://localhost:3000",
+//     credentials: true,
+//   }),
+// );
+
 app.use(express.json());
 
 // Auth routes

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "oshudpati-marketplace-server",
   "version": "1.0.0",
   "description": "Oshudpati Marketplace Server",
@@ -13,6 +14,7 @@
   "keywords": [],
   "author": "Zeanur Rahaman Zeon <zeon.cse@gmail.com>",
   "license": "ISC",
+  "packageManager": "pnpm@11.2.1",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
