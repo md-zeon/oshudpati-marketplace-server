@@ -397,6 +397,7 @@ var prisma = new PrismaClient({ adapter });
 
 // src/lib/auth.ts
 import nodemailer from "nodemailer";
+import { oAuthProxy } from "better-auth/plugins";
 var transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -411,14 +412,19 @@ var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
+  baseURL: process.env.PROD_APP_URL || "http://localhost:5000",
   trustedOrigins: [process.env.APP_URL || "http://localhost:3000"],
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
+  // Enable social login providers
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       accessType: "offline",
       prompt: "select_account consent"
+    },
+    twitter: {
+      clientId: process.env.TWITTER_CLIENT_ID,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET
     }
   },
   emailAndPassword: {
@@ -444,6 +450,9 @@ var auth = betterAuth({
       }
     }
   },
+  // account: {
+  //   skipStateCookieCheck: true, // Allow requests without state cookie (Postman, mobile apps, etc.)
+  // },
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
@@ -461,37 +470,82 @@ ${url}
 
 If you did not request this email, you can safely ignore it.`,
           html: `
-            <div style="margin:0;padding:0;background-color:#f6f8fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f6f8fb;padding:40px 16px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:40px 20px;">
+              <table width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+
+                    <table width="600" cellspacing="0" cellpadding="0"
+                      style="background:#ffffff;border-radius:12px;padding:40px;">
+
                       <tr>
-                        <td style="background:linear-gradient(135deg,#0f766e,#14b8a6);padding:32px 40px;color:#ffffff;">
-                          <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.85;margin-bottom:10px;">Oshudpati Marketplace</div>
-                          <h1 style="margin:0;font-size:28px;line-height:1.2;">Verify your email address</h1>
-                          <p style="margin:12px 0 0;font-size:16px;line-height:1.6;max-width:520px;">Hello ${user.name},<br>Please confirm your email address to finish creating your account and start using Oshudpati Marketplace.</p>
+                        <td>
+
+                          <h1 style="margin:0 0 24px;color:#0f172a;font-size:28px;">
+                            Verify your email address
+                          </h1>
+
+                          <p style="font-size:16px;color:#334155;line-height:1.7;">
+                            Hello ${user.name},
+                          </p>
+
+                          <p style="font-size:16px;color:#334155;line-height:1.7;">
+                            Thank you for creating an account with Oshudpati Marketplace.
+                            Please verify your email address to activate your account.
+                          </p>
+
+                          <div style="margin:32px 0;text-align:center;">
+                            <a
+                              href="${url}"
+                              style="
+                                display:inline-block;
+                                background:#0f766e;
+                                color:#ffffff;
+                                text-decoration:none;
+                                padding:14px 28px;
+                                border-radius:8px;
+                                font-weight:600;
+                              "
+                            >
+                              Verify Email
+                            </a>
+                          </div>
+
+                          <p style="font-size:14px;color:#64748b;line-height:1.7;">
+                            If the button doesn't work, copy and paste this link into your browser:
+                          </p>
+
+                          <p style="
+                            background:#f8fafc;
+                            border:1px solid #e2e8f0;
+                            padding:12px;
+                            border-radius:8px;
+                            word-break:break-word;
+                            font-size:14px;
+                          ">
+                            ${url}
+                          </p>
+
+                          <hr style="border:none;border-top:1px solid #e2e8f0;margin:32px 0;">
+
+                          <p style="font-size:13px;color:#94a3b8;line-height:1.6;">
+                            If you didn't create this account, you can safely ignore this email.
+                          </p>
+
+                          <p style="font-size:13px;color:#94a3b8;line-height:1.6;">
+                            Oshudpati Marketplace
+                          </p>
+
                         </td>
                       </tr>
-                      <tr>
-                        <td style="padding:40px;">
-                          <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#334155;">Click the button below to verify your email. If the button does not work, copy and paste the link into your browser.</p>
-                          <div style="text-align:center;margin:32px 0;">
-                            <a href="${url}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;line-height:1;border-radius:999px;padding:16px 28px;">Verify Email</a>
-                          </div>
-                          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin:0 0 24px;word-break:break-all;">
-                            <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:8px;">Verification link</div>
-                            <a href="${url}" style="color:#0f766e;text-decoration:none;">${url}</a>
-                          </div>
-                          <p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">If you did not request this email, you can safely ignore it.</p>
-                        </td>
-                      </tr>
+
                     </table>
+
                   </td>
                 </tr>
               </table>
             </div>
-          `
+            `
         });
         console.log("Verification email sent:", info.messageId);
       } catch (error) {
@@ -499,22 +553,31 @@ If you did not request this email, you can safely ignore it.`,
       }
     }
   },
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60 * 1e3
-      // 5 minutes
+  advanced: {
+    cookies: {
+      session_token: {
+        name: "session_token",
+        // Force this exact name
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          partitioned: true
+        }
+      },
+      state: {
+        name: "session_token",
+        // Force this exact name
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          partitioned: true
+        }
+      }
     }
   },
-  advanced: {
-    cookiePrefix: "better-auth",
-    useSecureCookies: process.env.NODE_ENV === "production",
-    crossSubDomainCookies: {
-      enabled: false
-    },
-    disableCSRFCheck: true
-    // Allow requests without Origin header (Postman, mobile apps, etc.)
-  }
+  plugins: [oAuthProxy()]
 });
 
 // src/modules/auth/auth.routes.ts
