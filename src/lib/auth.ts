@@ -26,6 +26,10 @@ export const auth = betterAuth({
       accessType: "offline",
       prompt: "select_account consent",
     },
+    twitter: {
+      clientId: process.env.TWITTER_CLIENT_ID as string,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET as string,
+    },
   },
   emailAndPassword: {
     enabled: true,
