@@ -2475,7 +2475,7 @@ router5.get(
 );
 router5.get(
   "/order-number/:orderNumber",
-  auth_default(UserRole.CUSTOMER, UserRole.SELLER),
+  auth_default(UserRole.CUSTOMER, UserRole.SELLER, UserRole.ADMIN),
   orderController.getOrderByOrderNumber
 );
 router5.patch(

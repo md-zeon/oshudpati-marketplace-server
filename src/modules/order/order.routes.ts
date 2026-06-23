@@ -37,7 +37,7 @@ router.get(
 
 router.get(
   "/order-number/:orderNumber",
-  auth(UserRole.CUSTOMER, UserRole.SELLER),
+  auth(UserRole.CUSTOMER, UserRole.SELLER, UserRole.ADMIN),
   orderController.getOrderByOrderNumber,
 );
 
