@@ -15,7 +15,10 @@ import { ReviewRoutes } from "./modules/review/review.routes";
 import { WishlistRoutes } from "./modules/wishlist/wishlist.routes";
 import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { ShopRoutes } from "./modules/shop/shop.routes";
+import { botBlock } from "./middlewares/botBlock";
 const app: Application = express();
+
+app.use(botBlock);
 
 // Configure CORS to allow both production and Vercel preview deployments
 const allowedOrigins = [
