@@ -16,9 +16,12 @@ import { WishlistRoutes } from "./modules/wishlist/wishlist.routes";
 import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { ShopRoutes } from "./modules/shop/shop.routes";
 import { botBlock } from "./middlewares/botBlock";
+import { rateLimit } from "./middlewares/rateLimit";
 const app: Application = express();
 
+// Cheap in-memory UA/path rejection first, so known bots never reach the database.
 app.use(botBlock);
+app.use(rateLimit);
 
 // Configure CORS to allow both production and Vercel preview deployments
 const allowedOrigins = [
@@ -51,7 +54,14 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["Set-Cookie"],
+    exposedHeaders: [
+      "Set-Cookie",
+      "RateLimit-Limit",
+      "RateLimit-Remaining",
+      "RateLimit-Reset",
+      "RateLimit-Policy",
+      "Retry-After",
+    ],
   }),
 );
 

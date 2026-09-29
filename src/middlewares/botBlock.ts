@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
+/**
+ * NOTE: this list is duplicated in the Next.js edge middleware
+ * (`src/proxy.ts` in oshudpati-marketplace-client). The two repos are deployed
+ * independently, so the list cannot be shared as a module. Keep them in sync,
+ * or move enforcement to a CDN/WAF rule and delete both copies.
+ */
 const botPatterns = [
   "Bytespider",
   "GPTBot",
@@ -32,47 +38,47 @@ const botPatterns = [
   "BingPreview",
 ];
 
-const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
+const suspiciousPatterns = [
+  "\\.php",
+  "\\.asp",
+  "\\.cgi",
+  "\\.pl",
+  "\\.py",
+  "wp-admin",
+  "wp-login",
+  "xmlrpc",
+  "wp-content",
+  "wp-includes",
+  "phpmyadmin",
+];
 
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 100;
+function isBot(userAgent: string): boolean {
+  const lowerUA = userAgent.toLowerCase();
+  return botPatterns.some((bot) => lowerUA.includes(bot.toLowerCase()));
+}
 
+function isSuspicious(path: string): boolean {
+  const lowerPath = path.toLowerCase();
+  return suspiciousPatterns.some((pattern) =>
+    new RegExp(pattern, "i").test(lowerPath),
+  );
+}
+
+/**
+ * User-agent and path policy only. Volume limiting lives in `rateLimit.ts`,
+ * which counts against Postgres so the limits hold across Vercel instances.
+ */
 export function botBlock(req: Request, res: Response, next: NextFunction) {
   const userAgent = req.headers["user-agent"] || "";
 
-  const lowerUA = userAgent.toLowerCase();
-  const isBot = botPatterns.some((bot) => lowerUA.includes(bot.toLowerCase()));
-
-  if (isBot) {
+  if (isBot(userAgent)) {
     res.status(403).json({ error: "Access Denied" });
     return;
   }
 
-  const ip =
-    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
-    req.ip ||
-    "unknown";
-
-  const now = Date.now();
-  const ipData = ipRequestCounts.get(ip);
-
-  if (!ipData || now > ipData.resetTime) {
-    ipRequestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-  } else {
-    ipData.count++;
-    if (ipData.count > RATE_LIMIT_MAX) {
-      res.status(429).json({ error: "Too many requests" });
-      return;
-    }
-  }
-
-  if (ipRequestCounts.size > 10000) {
-    const cutoff = now - RATE_LIMIT_WINDOW;
-    for (const [key, value] of ipRequestCounts.entries()) {
-      if (value.resetTime < cutoff) {
-        ipRequestCounts.delete(key);
-      }
-    }
+  if (isSuspicious(req.path)) {
+    res.status(403).json({ error: "Access Denied" });
+    return;
   }
 
   next();
